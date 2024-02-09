@@ -1,5 +1,4 @@
 #main code
-#main code
 import sqlite3 as sql
 import re as regex
 from random import randint
@@ -7,9 +6,9 @@ from datetime import date, datetime
 connecter = sql.connect('lab.db')
 #Creating basic database strucuture: to start we need to build up the structure
 cursor = connecter.cursor()
-cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT, Password TEXT, DateOfSetup TEXT, Admin TEXT)") #Admin 1 == yes 0 == No
-cursor.execute("CREATE TABLE IF NOT EXISTS Experiments (ExperimentID TEXT, Equipment TEXT, Date TEXT)")
-cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (Date TEXT, UserID TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
+cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin TEXT)") #Admin 1 == yes 0 == No
+cursor.execute("CREATE TABLE IF NOT EXISTS Experiments (ExperimentID TEXT PRIMARY KEY, Equipment TEXT, Date TEXT)")
+cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (Date TEXT, UserID TEXT PRIMARY KEY, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 '''
 Formats for Data:
 ADMIN: 1 == yes, 0 == No (can be used to add more levels later)
@@ -22,9 +21,10 @@ def randomLetter(count):
     out = ''
     letters = 'abcdefghijklmnopqrstuvwxyz'
     for i in range(count):
-        out = f'{out}{letters[randint(1, len(letters))]}'
+        out = f'{out}{letters[randint(1, len(letters) - 1)]}'
     return out
 def randomNumber(count):
+    out = ''
     for i in range(count):
         out = f'{out}{randint(1,9)}'
     return out
@@ -102,8 +102,43 @@ sign in: Time taken of day
 sign out: time taken of day, 
 totalDailyTime = time total in day
 '''
-def timeCur():
-    return datetime.now.isoformat()
+def timeCurrent():
+    return str(datetime.now().isoformat())[-15: -7] #formats time to be returned as HH:MM:SS
+
+def timeDifference(timein, timeout):
+    hoursdiff = int(timeout[0:2]) - int(timein[0:2])
+    minsdiff = int(timeout[3:5]) - int(timein[3:5])
+    if minsdiff < 0:
+        minsdiff += 60
+        hoursdiff -= 1
+    minsdiff, hoursdiff = str(abs(minsdiff)), str(abs(hoursdiff))
+    if len(minsdiff) == 1:
+        minsdiff = f'0{minsdiff}'
+    elif len(minsdiff) == 0:
+        minsdiff = '00'
+    if len(hoursdiff) == 1:
+        hoursdiff = f'0{hoursdiff}'
+    elif len(hoursdiff) == 0:
+        hoursdiff = '00'
+    return f'{hoursdiff}:{minsdiff}'
 
 def SignIn(UserID): 
-    cursor.execute(f"INSERT INTO SignIO VALUES(?,?,?,?,?)", )
+    cursor.execute(f"INSERT INTO SignIO VALUES(?,?,?,?,?)", (today(), UserID, timeCurrent(), '0', '0')) #need to implement second part
+
+
+def SignOut(UserID):
+    row = cursor.execute(f'SELECT SignInTime FROM SignIO WHERE (UserID = {UserID} AND Date = {today()})')
+    timein = row.fetchone()
+    currentTime = timeCurrent()
+    totaltime = timeDifference(timein, currentTime)
+    cursor.execute(f'UPDATE SignIO SET SignOutTime = {currentTime}, TotalTime = {totaltime} WHERE (UserID = {UserID} AND Date = {today()})')
+
+'''
+Testing is as follows:
+- Use IC library for outputs
+- Confirm all fits intentional output
+'''
+
+from icecream import ic
+ic(today())
+
