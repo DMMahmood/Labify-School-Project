@@ -1,10 +1,7 @@
 #main code
 import sqlite3 as sql
-<<<<<<< Updated upstream
 import re as regex
-=======
 from re import fullmatch
->>>>>>> Stashed changes
 from random import randint
 from datetime import date, datetime
 connecter = sql.connect('lab.db')
@@ -37,11 +34,7 @@ def userIDGen():
     ID = f'{randomLetter(4)}{randomNumber(3)}'
     return ID
 
-<<<<<<< Updated upstream
-def experimentIDGen(start):
-=======
 def experimentIDGen():
->>>>>>> Stashed changes
     ID = f'{randomLetter(10)}'
     return ID
 
@@ -50,24 +43,14 @@ def today():
 
 def createUser(password, admin):
     username = userIDGen()
-<<<<<<< Updated upstream
     if regex.fullmatch(r'[A-Za-z0-9@#$%^&+=]{8,}', password) == False or admin not in [0, 1]:
         return -1
     cursor.execute(f'INSERT INTO Users VALUES ({username}, {password}, {today()}), {int(admin)}') 
     return username
-    
-def createExperiment(equipment):
-    cursor.execute(f'INSERT INTO Users VALUES ({experimentIDGen()}, {equipment}, {today()})')
-=======
-    if fullmatch(r'[A-Za-z0-9@#$%^&+=]{8,}', password) == None or admin not in [0, 1]:
-        return -1
-    else:
-        cursor.execute(f'INSERT INTO Users VALUES (?,?,?,?)', (username, password, today(), int(admin)))
-        return username
+   
     
 def createExperiment(equipment):
     cursor.execute(f'INSERT INTO Experiments VALUES (?,?,?)', (experimentIDGen(), equipment, today()))
->>>>>>> Stashed changes
     
 def showAllUsers():
     rows =  cursor.execute(f'SELECT UserID, Password, DateOfSetup, Admin FROM Users') #Selects values from this table
@@ -158,9 +141,3 @@ Testing is as follows:
 - Confirm all fits intentional output
 '''
 
-<<<<<<< Updated upstream
-from icecream import ic
-ic(today())
-
-=======
->>>>>>> Stashed changes
