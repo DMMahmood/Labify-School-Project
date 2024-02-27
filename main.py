@@ -141,3 +141,12 @@ Testing is as follows:
 - Confirm all fits intentional output
 '''
 
+def adminCheck(user, password):
+    row = cursor.execute(f'SELECT UserID, Password FROM Users WHERE (admin = 1)')
+    vals = row.fetchall()
+    if vals == '':
+        return False
+    for person in vals:
+        if person[0] == user and person == password:
+            return True
+    return False
