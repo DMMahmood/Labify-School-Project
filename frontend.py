@@ -26,8 +26,6 @@ def mainUI():
     else:
         print('>invalid choice')
 
-while __name__ == '__main__':
-    mainUI()
 
 def UserMenu():
     suboptions = '1. Search user \n 2. Add user \n 3. Delete user \n 4. Back'
@@ -42,7 +40,7 @@ def UserMenu():
     elif choice == 2:
         addUser()
     elif choice == 3:
-        deletingUser()5
+        deletingUser()
     elif choice == 4:
         mainUI()
     else: 
