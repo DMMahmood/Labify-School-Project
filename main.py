@@ -1,4 +1,10 @@
 #main code
+#ADMIN PROFILE:  '''
+'''
+user: 'wtxd891'
+password: '111222ADMIN', 
+'2024-03-03', '1')]
+'''
 import sqlite3 as sql
 import re as regex
 import os, os.path
@@ -24,6 +30,7 @@ def randomLetter(count):
     for i in range(count):
         out = f'{out}{letters[randint(1, len(letters) - 1)]}'
     return out
+
 def randomNumber(count):
     out = ''
     for i in range(count):
@@ -34,31 +41,37 @@ def userIDGen():
     ID = f'{randomLetter(4)}{randomNumber(3)}'
     return ID
 
-
 def today():
     return str(date.today().isoformat())
 
 def createUser(password, admin):
+    todaya = today()
     username = userIDGen()
-    if regex.fullmatch(r'[A-Za-z0-9@#$%^&+=]{8,}', password) == False or admin not in ['0', '1']:
+    if not regex.fullmatch(r'[A-Za-z0-9]{8,}', password) or admin not in ['0', '1']:
         return -1
-    cursor.execute(f'INSERT INTO Users VALUES ({username}, {password}, {today()}), {admin}') 
+    cursor.execute(f"INSERT INTO Users VALUES (?, ?, ?, ?)", (str(userIDGen()), str(password), str(todaya), str(admin)))
     return username
-   
-    
-def createExperiment(equipment):
-    cursor.execute(f'INSERT INTO Experiments VALUES (?,?,?)', (experimentIDGen(), equipment, today()))
+
+
+
+def createExperiment(info):
+    cursor.execute(f'INSERT INTO Experiments VALUES (?,?,?,)', (experimentIDGen(), info, today()))
     
 def showAllUsers():
-    rows =  cursor.execute(f'SELECT UserID, Password, DateOfSetup, Admin FROM Users') #Selects values from this table
+    rows =  cursor.execute(f'SELECT * FROM Users') #Selects values from this table
     return rows.fetchall() #returns all rows
 
+
+
 def searchUserID(ID):
-    row = cursor.execute(f'SELECT * FROM Users WHERE UserID = "{ID}"') #finds where the id matches
+    row = cursor.execute(f'SELECT * FROM Users WHERE (UserID = "{str(ID)}")') #finds where the id matches
     if row == '':
         return -1
     else:
         return row.fetchone() #returns the first row
+
+print(showAllUsers())
+print(searchUserID(''))
     
 def searchExperimentID(ID):
     row = cursor.execute(f'SELECT * FROM Experiments WHERE ExperimentID = "{ID}"')
@@ -82,7 +95,9 @@ def searchExperimentDate(date):
         return -1
     else:
         return row.fetchone()
-    
+
+def experimentIDGen():
+    return f'{randomLetter(10)}'
 
 def deleteUser(admin, ID):
     if int(admin) != 1:
@@ -93,6 +108,7 @@ def deleteExperiment(admin, ID):
     if int(admin) != 1:
         return -1
     cursor.execute(f"DELETE FROM Experiments WHERE ExperimentID = {ID}")
+
 
 
 '''
@@ -173,28 +189,14 @@ def quoteClear():
     with open(file_path, 'w') as f:
         f.write('')
         return True
+
+
+
+
+def sn(val):  #sanitises the values
+    pattern = r"^(?i)(SELECT|INSERT\sINTO|UPDATE|DELETE|CREATE|DROP|ALTER).+;?$" #Checking for sql
+    if regex.match(pattern, val) is not None:
+        return 'TAMPERED VALUE'
+    else:
+        return str(val)
     
-
-def errorMessage(message):
-    pass
-
-
-class experiment:
-    def __init__(self, ExpName, TimeRequired, TimeSpent, TimeLeft, Users):
-        self.ExpName = ExpName
-        self.ID = f'{randomLetter(10)}'
-        self.TimeRequired = TimeRequired
-        self.TimeSpent = TimeSpent
-        self.TimeLeft = TimeLeft
-        self.Users = Users
-        
-
-    def UpdateTime(self, TimeUsed):
-        self.TimeSpent -=  TimeUsed
-        return self.TimeSpent
-
-    def ResetTime(self):
-        self.TimeSpent = 0 
-
-    def AddTime(self, TimeAdded):
-        
