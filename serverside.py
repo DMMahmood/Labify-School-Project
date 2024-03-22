@@ -9,7 +9,8 @@ cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Passw
 cursor.execute("CREATE TABLE IF NOT EXISTS Experiments (ExperimentID TEXT PRIMARY KEY, Equipment TEXT, Date TEXT)")
 cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 
-
+def com(): #To be added to severy sql command which updates/deletes/creates values
+    connecter.commit()
 def createUser(password, admin):
     username = userIDGen()
     if not regex.fullmatch(r'[A-Za-z0-9]{8,}', password) or admin not in [0, 1, '0', '1']:
@@ -18,6 +19,7 @@ def createUser(password, admin):
     username = str(userIDGen())
     cursor.execute (f"INSERT INTO Users VALUES (?, ?, ?, ?)", (username, str(password), today(), int(admin)))
     print(f"User Created: {username}")
+    com()
     return username
 
 def checkExistsInUsers(id):
@@ -59,6 +61,6 @@ def checkUserAdmin(id):
         print("User does not exist")
         return False
     
-createUser("ADMIN1234", 1)
-searchUserByID("ADMIN")
+
+searchUserByID("hfor549")
 findAllUsers()
