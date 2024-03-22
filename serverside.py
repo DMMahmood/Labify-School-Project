@@ -135,8 +135,10 @@ def incrementEquipment(Name):
         values = getEquipmentValues()
         count = values[2] + 1
         cursor.excecute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}")
+        com()
+        return True
 
-def incrementEquipment(Name):
+def decrementEquipment(Name):
     if checkEquipmentUsable(Name) == False:
         print("Equipment Not useable")
         return False
@@ -147,3 +149,16 @@ def incrementEquipment(Name):
             print("Count Can NOT go below 0")
             return False
         cursor.excecute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}")
+        com()
+        return True
+
+def deleteEquipment(Name):
+    if checkEquipmentExists(Name) == False:
+        print("CANT BE DELETED, DOES NOT EXIST")
+        return False
+    cursor.execute(f"DELETE FROM Experiments WHERE Name = '{Name}'")
+    com()
+    return True
+
+#equipment functions ends
+#defaultExperiments functions start
