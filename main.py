@@ -10,12 +10,12 @@ import re as regex
 import os, os.path
 from random import randint, choice
 from datetime import date, datetime
-connecter = sql.connect('lab.db')
+connecter = sql.connect('labify.db')
 #Creating basic database strucuture: to start we need to build up the structure
 cursor = connecter.cursor()
 cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin TEXT)") #Admin 1 == yes 0 == No
 cursor.execute("CREATE TABLE IF NOT EXISTS Experiments (ExperimentID TEXT PRIMARY KEY, Equipment TEXT, Date TEXT)")
-cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (Date TEXT, UserID TEXT PRIMARY KEY, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
+cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 '''
 Formats for Data:
 ADMIN: 1 == yes, 0 == No (can be used to add more levels later)
@@ -44,48 +44,17 @@ def userIDGen():
 def today():
     return str(date.today().isoformat())
 
-def createUser(password, admin):
-    todaya = today()
-    username = userIDGen()
-    if not regex.fullmatch(r'[A-Za-z0-9]{8,}', password) or admin not in ['0', '1']:
-        return -1
-    cursor.execute(f"INSERT INTO Users VALUES (?, ?, ?, ?)", (str(userIDGen()), str(password), str(todaya), str(admin)))
-    return username
-
-
 
 def createExperiment(info):
     cursor.execute(f'INSERT INTO Experiments VALUES (?,?,?,)', (experimentIDGen(), info, today()))
     
-def showAllUsers():
-    rows =  cursor.execute(f'SELECT * FROM Users') #Selects values from this table
-    return rows.fetchall() #returns all rows
 
-
-
-def searchUserID(ID):
-    row = cursor.execute(f'SELECT * FROM Users WHERE (UserID = "{str(ID)}")') #finds where the id matches
-    if row == '':
-        return -1
-    else:
-        return row.fetchone() #returns the first row
-
-print(showAllUsers())
-print(searchUserID(''))
     
 def searchExperimentID(ID):
     row = cursor.execute(f'SELECT * FROM Experiments WHERE ExperimentID = "{ID}"')
     if row == '':
         return -1
     else: 
-        return row.fetchone()
-
-    
-def searchUserAdmin(admin):
-    row = cursor.execute(f'SELECT * FROM Users WHERE Admin = "{int(admin)}"')
-    if row == '':
-        return -1
-    else:
         return row.fetchone()
 
     
@@ -196,7 +165,7 @@ def quoteClear():
 def sn(val):  #sanitises the values
     pattern = r"^(?i)(SELECT|INSERT\sINTO|UPDATE|DELETE|CREATE|DROP|ALTER).+;?$" #Checking for sql
     if regex.match(pattern, val) is not None:
-        return 'TAMPERED VALUE'
+        return ''
     else:
         return str(val)
     

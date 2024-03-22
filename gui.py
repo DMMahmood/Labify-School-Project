@@ -105,7 +105,11 @@ def ExperimentsWindow(prevWindow, User, admin):
 
 
 def LabsWindow(prevWindow, User, Admin):
-    pass
+    prevWindow.close()
+    labsLayout = [
+        [sg.Text('Labs'), sg.Text(str(today()))],
+        [sg.button('New', key='_NewLab'), ]
+    ]
 
 def SettingsWindow():
     pass
