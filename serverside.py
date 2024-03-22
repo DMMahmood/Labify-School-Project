@@ -162,3 +162,20 @@ def deleteEquipment(Name):
 
 #equipment functions ends
 #defaultExperiments functions start
+
+def checkDefaultExperimentExists(Name):
+    values = cursor.execute(f"SELECT ExperimentName FROM DefaultExperiments WHERE ExperimentName = '{Name}'")
+    values = values.fetchone()
+    if values == []:
+        print("Value not found")
+        return False
+    else:
+        print("Value Found")
+        return True
+    
+def createDefaultExperiment(Name, Equipment, TimeTaken) :
+    if checkDefaultExperimentExists(Name) == True:
+        print("Already exists")
+        return False
+    
+    
