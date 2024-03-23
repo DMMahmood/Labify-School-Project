@@ -199,12 +199,19 @@ def updateDefaultExperimentTimeTaken(Name, NewTimeTaken):
         print("Experiment does not exist")
         return False
     cursor.execute(f"UPDATE SET MinsTaken = {NewTimeTaken} WHERE ExperimentName = '{Name}'")
+    com()
     return True
     
 #end of default experiment
 #start of live experiment 
 
 def checkLiveExperimentExists(Name) -> bool:
+    values = cursor.execute(f"SELECT * FROM LiveExperiments WHERE ExperimentName = '{Name}'")
+    values = values.fetchone()
+    if values == []:
+        print("Experiment not found")
+        return False
+    print("Experiment Found")
+    return True
     
-
-    
+def createLiveExperiment(Name):
