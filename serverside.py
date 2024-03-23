@@ -4,8 +4,7 @@ from main import *
 connecter = sql.connect('labify.db')
 with connecter:
     cursor = connecter.cursor()
-
-def com(): #To be added to severy sql command which updates/deletes/creates values
+def com(): #To be added to every sql command which updates/deletes/creates values
     connecter.commit()
 #Creating the neccesary tables
 cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin INTERGER)") 
@@ -173,9 +172,39 @@ def checkDefaultExperimentExists(Name):
         print("Value Found")
         return True
     
-def createDefaultExperiment(Name, Equipment, TimeTaken) :
+def createDefaultExperiment(Name, Equipment, TimeTaken) -> True:
     if checkDefaultExperimentExists(Name) == True:
         print("Already exists")
         return False
+    Equipment = Equipment.split(',')
+    for Name in Equipment:
+        if checkEquipmentExists(Name) == False:
+            print("Eqiupment not available")
+            return False
+    print(f"New experiment is: {Name}, {Equipment}, {TimeTaken}")
+    cursor.execute(f"INSERT INTO DefaultExperiments Values (?,?,?)", (Name, Equipment, TimeTaken))
+    com()
+    return True
     
+def deleteDefaultExperiment(Name):
+    if checkDefaultExperimentExists(Name) == False:
+        print("experiment does not exist")
+        return False
+    cursor.execute(f"DELETE FROM DefaultExperiments WHERE ExperimentName = '{Name}'")
+    com()
+    return True
+
+def updateDefaultExperimentTimeTaken(Name, NewTimeTaken):
+    if checkDefaultExperimentExists(Name) == False:
+        print("Experiment does not exist")
+        return False
+    cursor.execute(f"UPDATE SET MinsTaken = {NewTimeTaken} WHERE ExperimentName = '{Name}'")
+    return True
+    
+#end of default experiment
+#start of live experiment 
+
+def checkLiveExperimentExists(Name) -> bool:
+    
+
     
