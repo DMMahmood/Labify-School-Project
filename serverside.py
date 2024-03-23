@@ -11,7 +11,7 @@ def com(): #To be added to severy sql command which updates/deletes/creates valu
 cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin INTERGER)") 
 cursor.execute("CREATE TABLE IF NOT EXISTS Equipment (EquipmentName TEXT PRIMARY KEY, CountOfEquipment INTERGER, CountOfInUseEquipment INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
-cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, Equipment TEXT, Date TEXT)")
+cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, Equipment TEXT, Live BOOLEAN)")
 cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 com()
 #Start of User functions
@@ -29,7 +29,7 @@ def createUser(password, admin):
     com()
     return username
 
-def checkExistsInUsers(id):
+def checkExistsInUsers(id) -> bool:
     values = cursor.execute(f"SELECT UserID FROM Users WHERE UserID='{id}'")
     values = values.fetchall()
     if values == []:
@@ -47,17 +47,18 @@ def searchUserByID(id):
         print(f"User is {values}")
         return values
     
-def findAllUsers():
+def findAllUsers() -> list:
     values = cursor.execute(f'SELECT * FROM Users')
     values = values.fetchall()
     if values == []:
         print("No users in database")
+        return ['None']
     else:
         for val in values:
             print(val)
         return values
 
-def checkUserAdmin(id):
+def checkUserAdmin(id) -> bool:
     if checkExistsInUsers(id):
         user = searchUserByID(id)
         if user[3] == 1:
@@ -69,7 +70,7 @@ def checkUserAdmin(id):
         return False
     
 
-def updateUserName(id, newid): #Must be done by admin
+def updateUserName(id, newid) -> bool: #Must be done by admin
     if checkExistsInUsers(id) == False:
         print("Error: User not found in DB")
         return False
@@ -79,7 +80,7 @@ def updateUserName(id, newid): #Must be done by admin
         print(f"User {newid} has had id changed from {id} -> {newid}")
         return True
 
-def deleteUserFromUsers(id):
+def deleteUserFromUsers(id) -> bool:
     if checkExistsInUsers(id) == False:
         print("Error: User not found in DB")
         return False
@@ -90,7 +91,7 @@ def deleteUserFromUsers(id):
 #end of Users functions
 #start of Equipment functions
      
-def checkEquipmentExists(Name):
+def checkEquipmentExists(Name) -> bool:
     values = cursor.execute(f"SELECT EquipmentName FROM Equipment WHERE EquipmentName = '{Name}' ")
     values = values.fetchall()
     if values == []:
@@ -99,7 +100,7 @@ def checkEquipmentExists(Name):
     else:
         return True
     
-def checkEquipmentUsable(Name):
+def checkEquipmentUsable(Name) -> bool:
     if checkEquipmentExists(Name) == False:
         print("Equipment was not found")
         return False
@@ -111,7 +112,7 @@ def checkEquipmentUsable(Name):
     else:
         return True
     
-def createNewEquipment(Name, Count):
+def createNewEquipment(Name, Count) -> bool:
     if checkEquipmentExists(Name) == False:
         print("Equipment already exists")
         return False
@@ -127,7 +128,7 @@ def getEquipmentValues(Name):
     values = values.fetchone()
     return values
 
-def incrementEquipment(Name):
+def incrementEquipment(Name) -> bool:
     if checkEquipmentUsable(Name) == False:
         print("Equipment Not useable")
         return False
@@ -138,7 +139,7 @@ def incrementEquipment(Name):
         com()
         return True
 
-def decrementEquipment(Name):
+def decrementEquipment(Name) -> bool:
     if checkEquipmentUsable(Name) == False:
         print("Equipment Not useable")
         return False
@@ -152,7 +153,7 @@ def decrementEquipment(Name):
         com()
         return True
 
-def deleteEquipment(Name):
+def deleteEquipment(Name) -> bool:
     if checkEquipmentExists(Name) == False:
         print("CANT BE DELETED, DOES NOT EXIST")
         return False
@@ -163,7 +164,7 @@ def deleteEquipment(Name):
 #equipment functions ends
 #defaultExperiments functions start
 
-def checkDefaultExperimentExists(Name):
+def checkDefaultExperimentExists(Name) -> bool:
     values = cursor.execute(f"SELECT ExperimentName FROM DefaultExperiments WHERE ExperimentName = '{Name}'")
     values = values.fetchone()
     if values == []:
@@ -173,9 +174,39 @@ def checkDefaultExperimentExists(Name):
         print("Value Found")
         return True
     
-def createDefaultExperiment(Name, Equipment, TimeTaken) :
+def createDefaultExperiment(Name, Equipment, TimeTaken) -> bool:
     if checkDefaultExperimentExists(Name) == True:
         print("Already exists")
         return False
+    for tool in Equipment:
+        if checkEquipmentExists(tool) == False:
+            print("Equipment Not Available, Add that First")
+            return False
+    cursor.execute("INSERT INTO DefaultEquipment Values = (?,?,?)", (Name, Equipment, TimeTaken))
+    com()
+    return True
     
     
+def deleteDefaultExperiment(Name) -> bool:
+    if checkDefaultExperimentExists(Name) == False:
+        print("Does not exist to be deleted")
+        return False
+    else:
+        cursor.execute(f"DELETE FROM DefaultExperiments WHERE ExperimentName = '{Name}'")
+        com()
+        return True
+    
+#end of default experiment functions
+#start of live experiment functions 
+    
+def checkLiveExperimentExists(Name):
+    values = cursor.execute(f"SELECT ExperimentName FROM LiveExperiments WHERE Name = '{name}'")
+    values = values.fetchall()
+    if values == []:
+        print("Experiment not exist")
+        return False
+    else:
+        return True
+    
+def createLiveExperimentFromDefault(Date):
+    #Add logic to check for each equipment, then start from date + time taken
