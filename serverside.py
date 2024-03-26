@@ -1,20 +1,22 @@
 import sqlite3 as sql
 from os import path
 from main import *
+from random import choice
+from string import ascii_letters
 connecter = sql.connect('labify.db')
 with connecter:
     cursor = connecter.cursor()
 def com(): #To be added to every sql command which updates/deletes/creates values
     connecter.commit()
 #Creating the neccesary tables
-cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin INTERGER)") 
+cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS Equipment (EquipmentName TEXT PRIMARY KEY, CountOfEquipment INTERGER, CountOfInUseEquipment INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
-cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, Equipment TEXT, Live BOOLEAN)")
+cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active BOOLEAN)")
 cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 com()
 #Start of User functions
-def createUser(password, admin): 
+def createUser(password, admin):
     username = userIDGen()
     if not regex.fullmatch(r'[A-Za-z0-9]{8,}', password) or admin not in [0, 1, '0', '1']:
         print("RegexError, Serverside")
@@ -35,17 +37,17 @@ def checkExistsInUsers(id) -> bool:
         return False
     else:
         return True
-    
+
 def searchUserByID(id):
     values = cursor.execute(f"SELECT * FROM Users WHERE UserID = '{id}'")
     values = values.fetchone()
     if values == None:
         print("User does not exist")
-        return False
+        return [0,0,0,0]
     else:
         print(f"User is {values}")
         return values
-    
+
 def findAllUsers() -> list:
     values = cursor.execute(f'SELECT * FROM Users')
     values = values.fetchall()
@@ -67,7 +69,7 @@ def checkUserAdmin(id) -> bool:
     else:
         print("User does not exist")
         return False
-    
+
 
 def updateUserName(id, newid) -> bool: #Must be done by admin
     if checkExistsInUsers(id) == False:
@@ -89,7 +91,7 @@ def deleteUserFromUsers(id) -> bool:
         return True
 #end of Users functions
 #start of Equipment functions
-     
+
 def checkEquipmentExists(Name) -> bool:
     values = cursor.execute(f"SELECT EquipmentName FROM Equipment WHERE EquipmentName = '{Name}' ")
     values = values.fetchall()
@@ -98,7 +100,7 @@ def checkEquipmentExists(Name) -> bool:
         return False
     else:
         return True
-    
+
 def checkEquipmentUsable(Name) -> bool:
     if checkEquipmentExists(Name) == False:
         print("Equipment was not found")
@@ -110,7 +112,7 @@ def checkEquipmentUsable(Name) -> bool:
         return False
     else:
         return True
-    
+
 def createNewEquipment(Name, Count) -> bool:
     if checkEquipmentExists(Name) == False:
         print("Equipment already exists")
@@ -119,10 +121,10 @@ def createNewEquipment(Name, Count) -> bool:
         cursor.execute("INSERT INTO Equipment Values (?, ?, ?)", (Name, Count, 0))
         com()
         return True
-    
+
 def getEquipmentValues(Name):
     if checkEquipmentExists(Name) == False:
-        return False
+        return [None,None, 0, 0]
     values = cursor.execute(f"SELECT * FROM Equipment WHERE Equipment = '{Name}'")
     values = values.fetchone()
     return values
@@ -132,9 +134,9 @@ def incrementEquipment(Name) -> bool:
         print("Equipment Not useable")
         return False
     else:
-        values = getEquipmentValues()
+        values = getEquipmentValues(Name)
         count = values[2] + 1
-        cursor.excecute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}")
+        cursor.execute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}")
         com()
         return True
 
@@ -143,12 +145,12 @@ def decrementEquipment(Name) -> bool:
         print("Equipment Not useable")
         return False
     else:
-        values = getEquipmentValues()
-        count = values[2] - 1 
+        values = getEquipmentValues(Name)
+        count = values[2] - 1
         if count < 0:
             print("Count Can NOT go below 0")
             return False
-        cursor.excecute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}")
+        cursor.execute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}")
         com()
         return True
 
@@ -172,10 +174,54 @@ def checkDefaultExperimentExists(Name) -> bool:
     else:
         print("Value Found")
         return True
-    
+
 def createDefaultExperiment(Name, Equipment, TimeTaken) :
     if checkDefaultExperimentExists(Name) == True:
         print("Already exists")
         return False
-    
-    
+    else:
+        cursor.execute(f"INSERT INTO DefaultExperiments Values(?, ?, ?)", (Name, Equipment, TimeTaken))
+        com()
+        print("Default Experiment added")
+        return True
+
+
+def removeDefaultExperiment(Name):
+    if checkDefaultExperimentExists(Name) == False:
+        print("Experiment Not Found")
+        return False
+    cursor.execute(f"DELETE FROM DefaultExperiments WHERE Name = '{Name}'")
+    com()
+    print("Default Experiment Deleted")
+    return True
+
+#end of defaultexperiments
+#start of liveexperiments
+
+def checkExperimentExistsByName(Name):
+    values = cursor.execute(f"SELECT ExperimentName FROM LiveExperiments WHERE ExperimentName = '{Name}'")
+    values = values.fetchone()
+    if values == []:
+        print("Value not found")
+        return False
+    else:
+        print("Value Found")
+        return True
+
+def checkExperimentExistsByID(ID):
+    values = cursor.execute(f"SELECT ExperimentID FROM LiveExperiments WHERE ExperimentID = '{ID}'")
+    values = values.fetchone()
+    if values == []:
+        print("Value not found")
+        return False
+    else:
+        print("Value Found")
+        return True
+
+def createExperimentID() -> str:
+    ID = ''
+    for i in range(0, 12):
+        ID = "f{ID}{choice(ascii_letters)}"
+    if checkExperimentExistsByID(ID) == True:
+        createExperimentID()
+    return ID
