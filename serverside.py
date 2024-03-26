@@ -12,7 +12,7 @@ def com(): #To be added to every sql command which updates/deletes/creates value
 cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS Equipment (EquipmentName TEXT PRIMARY KEY, CountOfEquipment INTERGER, CountOfInUseEquipment INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
-cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active BOOLEAN)")
+cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active BOOLEAN, UserID TEXT))")
 cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 com()
 #Start of User functions
@@ -225,3 +225,79 @@ def createExperimentID() -> str:
     if checkExperimentExistsByID(ID) == True:
         createExperimentID()
     return ID
+
+'''cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
+cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active BOOLEAN, UserID TEXT))")'''
+def createLiveExperimentFromDefault(NameOfDefault, User):
+    if checkDefaultExperimentExists(NameOfDefault) == False:
+        print("Default Experiment Not Found")
+        return False
+    defaultValues = cursor.execute(f"SELECT * FROM DefaultExperiments WHERE ExperimentName = '{NameOfDefault}'")
+    defaultValues = defaultValues.fetchone()
+    Equipment = defaultValues[1].split(',')
+    for obj in Equipment:
+        increment = incrementEquipment(obj)
+        if checkEquipmentUsable(obj) == False:
+            print("Equipment Not Usable")
+            return False
+        if incrementEquipment(obj) == False:
+            print("Error incrementing equipment")
+            return False
+    ID = createExperimentID()
+    cursor.execute(f"INSERT INTO LiveExperiments Values (?, ?, ?, ?, ?)", (ID, NameOfDefault, Equipment, True, User))
+    com()
+    return True
+
+def createLiveExperimentFromNew(NameofExperiment, Equipment, User):
+    if checkDefaultExperimentExists(NameofExperiment) == True:
+        print("Default Experiment Already Exists")
+        return False
+    for obj in Equipment:
+        if checkEquipmentUsable(obj) == False:
+            print("Equipment Not Usable")
+            return False
+        if incrementEquipment(obj) == False:
+            print("Error incrementing equipment")
+            return False
+    ID = createExperimentID()
+    cursor.execute(f"INSERT INTO LiveExperiments Values (?, ?, ?, ?, ?)", (ID, NameofExperiment, Equipment, True, User))
+    com()
+    return True
+
+def removeLiveExperimentByID(ID):
+    if checkExperimentExistsByID(ID) == False:
+        print("Experiment Not Found")
+        return False
+    values = cursor.execute(f"SELECT Equipment FROM LiveExperiments WHERE ExperimentID = '{ID}'")
+    values = values.fetchone()
+    for obj in values:
+        decrement = decrementEquipment(obj)
+        if decrement == False:
+            print("Error Decrementing Equipment")
+            return False
+    cursor.execute(f"DELETE FROM LiveExperiments WHERE ExperimentID = '{ID}'")
+    com()
+    return
+
+def getIDOfLiveFromName(Name):
+    values = cursor.execute(f"SELECT ExperimentID FROM LiveExperiments WHERE ExperimentName = '{Name}'")
+    values = values.fetchone()
+    if values == []:
+        print("Experiment Not Found")
+        return 0
+    return values[0]
+
+def getLiveExperimentValuesByID(ID):
+    if checkExperimentExistsByID(ID) == False:
+        print("Experiment Not Found")
+        return [None, None, None, None, None]
+    values = cursor.execute(f"SELECT * FROM LiveExperiments WHERE ExperimentID = '{ID}'")
+    values = values.fetchone()
+    return values
+
+def getLiveExperimentValuesByName(Name):
+    ID = getIDOfLiveFromName(Name)
+    if ID == 0:
+        print("Experiment Not Found")
+        return [None, None, None, None, None]
+    return getLiveExperimentValuesByID(ID)
