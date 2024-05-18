@@ -43,7 +43,8 @@ layouts = {
         [sg.Text('Settings'), sg.Text(str(today()))],
         [sg.Button('Change Password', key= '_ChangePass'), sg.Button('Change User', key= '_ChangeUser')],
         [sg.Button('Close', key= '_Close')]
-    ],
+    ]
+}
 
 
 def StartWindow():
