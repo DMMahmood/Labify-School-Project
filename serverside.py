@@ -302,4 +302,3 @@ def getLiveExperimentValuesByName(Name):
         return [None, None, None, None, None]
     return getLiveExperimentValuesByID(ID)
 
-print("Balls")
