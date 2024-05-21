@@ -124,9 +124,9 @@ Testing is as follows:
 '''
 
 def AdminCheck(user, password):
-    admins = cursor.execute(f'SELECT UserID, Password WHERE (Admin = 1 AND UserID = {user} AND Password = {password})')
+    admins = cursor.execute(f"SELECT UserID, Password FROM Users WHERE (Admin = 1 AND UserID = '{user}' AND Password = '{password}')")
     admins = admins.fetchall()
-    if admins == None or admins == '':
+    if admins == None or admins == []:
         return False
     else:
         return True

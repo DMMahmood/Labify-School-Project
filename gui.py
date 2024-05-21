@@ -1,6 +1,8 @@
 import PySimpleGUI as sg
 from main import *
+from serverside import *
 from random import randint
+import matplotlib as mpl
 sg.theme('DarkGrey')
 '''
 Windows i need:
@@ -21,11 +23,18 @@ create experiment template
 delete experiment template
 '''
 
+'''
+testing admin data:
+username: liqp214
+password: TestPassword1
+'''
+exec(open("serverside.py").read())
+
 def signInWindow():
     layout = [
         [sg.T('Welcome User')],
         [sg.T('ID'), sg.Input(key='_ID')],
-        [sg.T('Password'), sg.Input(key='_Password')],
+        [sg.T('Password'), sg.Input(key='_Password', password_char='*')],
         [sg.B('Sign in', key='_SignIn'), sg.Cancel()]
     ]
     window = sg.Window('Labify', layout)
@@ -33,11 +42,31 @@ def signInWindow():
         event, values = window.read()
         if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
             break
-#signInWindow()
+        elif event == '_SignIn':
+            ID = values['_ID']
+            password = values['_Password']
+            userExists = checkExistsInUsers(ID)
+            if userExists == False:
+                sg.popup('User does not exist')
+                signInWindow()
+            realpassword = getPassword(ID)
+            if realpassword == password:
+                adminStatus = AdminCheck(ID, password)
+                if adminStatus == True:
+                    window.Close()
+                    mainAdminWindow(ID)
+                else:
+                    window.Close()
+                    mainUserWindow(ID)
+            else:
+                sg.popup(f'Incorrect password')
+
+                
 def signUpWindow():
     layout = [
-        [sg.T('Name'), sg.Input('')],
-        [sg.T('Password'), sg.Input('', password_char='*')],
+        [sg.T('Name'), sg.Input('', key='_Name')],
+        [sg.T('Password'), sg.Input('', password_char='*', key='_Password')],
+        [sg.T('Admin'), sg.DropDown(['No', 'Yes'], default_value=['No'], readonly=True)],
         [sg.B('Sign Up'), sg.Cancel()]
     ]
     window = sg.Window('Labify', layout)
@@ -45,18 +74,47 @@ def signUpWindow():
         event, values = window.read()
         if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
             break
+        else:
+            password, admin = values['_Password'], values['_Admin']
+            if admin == 'Yes':
+                admin = 1
+            else:
+                admin = 0
+            createUser(password, admin)
+
 #SignUpWindow()
-def mainAdminWindow(User):
+def mainAdminWindow(ID):
     layout = [
-        [sg.T(f'Welcome ADMIN {User}, todays date is {today()})')],
+        [sg.T(f'Welcome ADMIN {ID}, todays date is {today()})')],
         [sg.B('Manage Users'), sg.B('Manage Experiments'), sg.B('Manage Equipment')],
-        [sg.B('Sign Out'), [sg.B('User View')], sg.Cancel()]
+        [sg.B('Sign Out'), [sg.B('User View')], sg.Exit()]
     ]
     window = sg.Window('Labify', layout)
     while True:
         event, values = window.read()
-        if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
+        if event == sg.WIN_CLOSED or event == 'Exit': # if user closes window or clicks cancel
             break
+        elif event == 'Sign Out':
+            window.Close()
+            signInWindow()
+        elif event == 'Manage Users':
+            window.Close()
+            mainUserWindow(ID)
+        elif event == 'Manage Experiments':
+            experimentsManagementWindow()
+        elif event == 'Manage Equipment':
+            equipmentManagementWindow()
+
+def experimentsManagementWindow():
+    layout = [
+        [sg.T('Defaults'), sg.B('Create'), sg.B('Delete'), sg.B('Edit')]
+    ]
+
+def equipmentManagementWindow():
+    pass
+
+
+
 
 def mainUserWindow(User):
     layout = [ 
@@ -93,6 +151,16 @@ def createUserWindow():
     layout = [
         [sg.T('Name'), sg.Input()],
         [sg.T('Password'), sg.Input(password_char='*')],
-        [sg.B('Admin')]
+        [sg.B('Admin'), sg.DD(['Yes', 'No'], default_value='No')],
+        [sg.B('Submit'), sg.Cancel()]
     ]
-    
+    window = sg.Window('Labify', layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED:
+            window.close()
+            break
+        elif event == 'Cancel':
+            window.close()
+            break
+

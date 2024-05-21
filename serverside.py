@@ -6,6 +6,11 @@ from string import ascii_letters
 connecter = sql.connect('labify.db')
 with connecter:
     cursor = connecter.cursor()
+'''
+testing admin data:
+username: liqp214
+password: TestPassword1
+'''
 def com(): #To be added to every sql command which updates/deletes/creates values
     connecter.commit()
 #Creating the neccesary tables
@@ -16,6 +21,22 @@ cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PR
 cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 com()
 #Start of User functions
+def checkExistsInUsers(id) -> bool:
+    values = cursor.execute(f"SELECT UserID FROM Users WHERE UserID='{id}'")
+    values = values.fetchall()
+    if values == []:
+        return False
+    else:
+        return True
+
+def getPassword(id) -> str:
+    if checkExistsInUsers(id) == True:
+        values = cursor.execute(f"SELECT Password FROM Users WHERE UserID='{id}'")
+        values = values.fetchone()
+        return values[0] 
+    else:
+        return 'INVALID'
+    
 def createUser(password, admin):
     username = userIDGen()
     if not regex.fullmatch(r'[A-Za-z0-9]{8,}', password) or admin not in [0, 1, '0', '1']:
@@ -29,14 +50,6 @@ def createUser(password, admin):
     print(f"User Created: {username}")
     com()
     return username
-
-def checkExistsInUsers(id) -> bool:
-    values = cursor.execute(f"SELECT UserID FROM Users WHERE UserID='{id}'")
-    values = values.fetchall()
-    if values == []:
-        return False
-    else:
-        return True
 
 def searchUserByID(id):
     values = cursor.execute(f"SELECT * FROM Users WHERE UserID = '{id}'")
@@ -301,4 +314,3 @@ def getLiveExperimentValuesByName(Name):
         print("Experiment Not Found")
         return [None, None, None, None, None]
     return getLiveExperimentValuesByID(ID)
-
