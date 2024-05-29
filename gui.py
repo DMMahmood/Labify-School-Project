@@ -61,28 +61,6 @@ def signInWindow():
             else:
                 sg.popup(f'Incorrect password')
 
-                
-def signUpWindow():
-    layout = [
-        [sg.T('Name'), sg.Input('', key='_Name')],
-        [sg.T('Password'), sg.Input('', password_char='*', key='_Password')],
-        [sg.T('Admin'), sg.DropDown(['No', 'Yes'], default_value=['No'], readonly=True)],
-        [sg.B('Sign Up'), sg.Cancel()]
-    ]
-    window = sg.Window('Labify', layout)
-    while True:
-        event, values = window.read()
-        if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
-            break
-        else:
-            password, admin = values['_Password'], values['_Admin']
-            if admin == 'Yes':
-                admin = 1
-            else:
-                admin = 0
-            createUser(password, admin)
-
-#SignUpWindow()
 def mainAdminWindow(ID):
     layout = [
         [sg.T(f'Welcome ADMIN {ID}, todays date is {today()})')],
@@ -101,14 +79,18 @@ def mainAdminWindow(ID):
             window.Close()
             mainUserWindow(ID)
         elif event == 'Manage Experiments':
-            experimentsManagementWindow()
+            defaultExperimentWindow()
         elif event == 'Manage Equipment':
             equipmentManagementWindow()
 
-def experimentsManagementWindow():
+def defaultExperimentWindow()
     layout = [
-        [sg.T('Defaults'), sg.B('Create'), sg.B('Delete'), sg.B('Edit')]
+        [sg.T('Default Experiments')]
+        [sg.B('Create'), sg.B('Delete'), sg.B('Edit')]
     ]
+    window = sg.Window('Labify', layout)
+
+
 
 def equipmentManagementWindow():
     pass
@@ -149,9 +131,9 @@ def manageExperimentsWindow(User):
 
 def createUserWindow():
     layout = [
-        [sg.T('Name'), sg.Input()],
-        [sg.T('Password'), sg.Input(password_char='*')],
-        [sg.B('Admin'), sg.DD(['Yes', 'No'], default_value='No')],
+        [sg.T('Name'), sg.Input(key='_Name')],
+        [sg.T('Password'), sg.Input(key='_Password', password_char='*')],
+        [sg.T('Admin'), sg.DD(['Yes', 'No'], default_value='No', key='_Admin')],
         [sg.B('Submit'), sg.Cancel()]
     ]
     window = sg.Window('Labify', layout)
@@ -163,4 +145,18 @@ def createUserWindow():
         elif event == 'Cancel':
             window.close()
             break
+        elif event == 'Submit':
+            Name = values['_Name']
+            Password = values['_Password']
+            Admin = convertTo01(values['_Admin'])
+            ID = createUser(Password, Admin)
+            if ID == False:
+                sg.Popup('Error please try again')
+            else:
+                if Admin == 1:
+                    sg.Popup(f"Your unique id is {ID}, you are an admin")
+                else:
+                    sg.Popup(f"Your unique id is {ID}")
+        
+createUserWindow()
 

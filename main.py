@@ -169,3 +169,9 @@ def sn(val):  #sanitises the values
     else:
         return str(val)
     
+def convertTo01(val) -> int:
+    if val == 'No':
+        return 0
+    return 1
+
+print(timeCurrent())
