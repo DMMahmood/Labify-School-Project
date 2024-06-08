@@ -3,6 +3,7 @@ from os import path
 from main import *
 from random import choice
 from string import ascii_letters
+#import bcrypt
 connecter = sql.connect('labify.db')
 with connecter:
     cursor = connecter.cursor()
@@ -29,15 +30,17 @@ def checkExistsInUsers(id) -> bool:
         return False
     else:
         return True
-
-def getPassword(id) -> str:
-    if checkExistsInUsers(id) == True:
-        values = cursor.execute(f"SELECT Password FROM Users WHERE UserID='{id}'")
-        values = values.fetchone()
-        return values[0] 
-    else:
-        return 'INVALID'
     
+def createPassWordHash(password):
+    password = (password)
+    salt = bcrypt.gensalt()
+    hashedpassword = bcrypt.hashpw(password, salt)
+    print(salt)
+    print(password)
+    print(hashedpassword)
+
+
+
 def createUser(password, admin):
     username = userIDGen()
     if not regex.fullmatch(r'[A-Za-z0-9]{8,}', password) or admin not in [0, 1, '0', '1']:
