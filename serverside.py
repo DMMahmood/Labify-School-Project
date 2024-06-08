@@ -13,6 +13,7 @@ password: TestPassword1
 '''
 def com(): #To be added to every sql command which updates/deletes/creates values
     connecter.commit()
+    
 #Creating the neccesary tables
 cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS Equipment (EquipmentName TEXT PRIMARY KEY, CountOfEquipment INTERGER, CountOfInUseEquipment INTERGER)")
@@ -109,7 +110,6 @@ def checkEquipmentExists(Name) -> bool:
     values = cursor.execute(f"SELECT EquipmentName FROM Equipment WHERE EquipmentName = '{Name}' ")
     values = values.fetchall()
     if values == []:
-        print("Equipment does not exist")
         return False
     else:
         return True
@@ -127,7 +127,7 @@ def checkEquipmentUsable(Name) -> bool:
         return True
 
 def createNewEquipment(Name, Count) -> bool:
-    if checkEquipmentExists(Name) == False:
+    if checkEquipmentExists(Name) == True:
         print("Equipment already exists")
         return False
     else:
@@ -175,6 +175,12 @@ def deleteEquipment(Name) -> bool:
     com()
     return True
 
+def getAllEquipment():
+    values = cursor.execute("SELECT EquipmentName FROM Equipment")
+    values = values.fetchall()
+    for i in range(len(values)):
+        values[i] = str(values[i][0])
+    return values
 #equipment functions ends
 #defaultExperiments functions start
 
@@ -234,7 +240,7 @@ def checkExperimentExistsByID(ID):
 def createExperimentID() -> str:
     ID = ''
     for i in range(0, 12):
-        ID = "f{ID}{choice(ascii_letters)}"
+        ID = f"{ID}{choice(ascii_letters)}"
     if checkExperimentExistsByID(ID) == True:
         createExperimentID()
     return ID

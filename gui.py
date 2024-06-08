@@ -6,18 +6,18 @@ import matplotlib as mpl
 sg.theme('DarkGrey')
 '''
 Windows i need:
-sign in 
-signout
-signup
-main admin window
-main non admin window
+sign in  done
+signout done 
+signup done
+main admin window done 
+main non admin window done
 -admin- 
-manage users
-manage experiments
-create user
-delete user
+manage users - Submenus: create, delete, update
+manage experiments - Submenus: create, delete, update
+create user done
+delete user done
 -main user-
-create experiment
+create experiment 
 delete experiment
 create experiment template
 delete experiment template
@@ -83,12 +83,57 @@ def mainAdminWindow(ID):
         elif event == 'Manage Equipment':
             equipmentManagementWindow()
 
-def defaultExperimentWindow()
+def defaultExperimentWindow():
     layout = [
-        [sg.T('Default Experiments')]
+        [sg.T('Default Experiments')], 
         [sg.B('Create'), sg.B('Delete'), sg.B('Edit')]
     ]
     window = sg.Window('Labify', layout)
+    pass
+
+def getCheckBoxes(values) -> list:
+    boxes = []
+    for value in values:
+        boxes.append([sg.Checkbox(str(value), default=False, id=f'_{value}')])
+    return boxes
+
+def createDefaultExperimentWindow():
+    allequipment = getAllEquipment()
+    for i in range (0, len(allequipment)):
+        allequipment[i] = [str(allequipment[i]), 0]
+    #essentially need to check if each equipment is possiblle by having a dynamic layout whihc adaptsto the changing ammoint of equipment needed
+    layout = [
+        [sg.T('Name'), sg.InputText('', key='_Name')],
+        [sg.T('Time (mins)'), sg.InputText('', key='_Time')],
+        [sg.T('Equipment')],
+        getCheckBoxes(getAllEquipment()),
+        [sg.B('Confirm'), sg.B('Cancel')]
+        ]
+
+    window = sg.Window('labify', layout)
+    event, values = window.read()
+    while True:
+        if event == sg.WINDOW_CLOSED or event == 'Exit':
+            break
+        elif event == 'Confirm':
+            equipment = []
+            Name = values['_Name']
+            if checkDefaultExperimentExists(Name):
+                sg.Popup('Default already exists')
+                window.close()
+                defaultExperimentWindow()
+            for each in allequipment:
+                if values[f'_{each}'] == True:
+                    equipment.append(each)
+            try:
+                time = int(values['_Time'])
+                if 0 > time or time > 1200:
+                    sg.Popup('Time not valid')    
+            except ValueError:
+                sg.Popup('Time not valid')
+                
+            
+            createDefaultExperiment(Name, str(equipment), time)
 
 
 
@@ -157,6 +202,5 @@ def createUserWindow():
                     sg.Popup(f"Your unique id is {ID}, you are an admin")
                 else:
                     sg.Popup(f"Your unique id is {ID}")
-        
-createUserWindow()
 
+signInWindow()
