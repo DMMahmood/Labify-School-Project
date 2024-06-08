@@ -38,6 +38,32 @@ def signInWindow():
         [sg.B('Sign in', key='_SignIn'), sg.Cancel()]
     ]
     window = sg.Window('Labify', layout)
+     'AdminMainLayout' : [
+        [sg.Text('Welcome ADMIN', text_color='Red'), sg.Text(today())],
+        [sg.Button('Experiments', key= '_Experiments'), sg.Button('Labs', key= '_Labs')],
+        [sg.Button('View Info', key= '_ViewInfo'), sg.Button('Settings', key= '_Settings')],
+        [sg.Button('Close', key='_Close')]
+    ],
+    'ExperimentsLayout' : [
+        [sg.Text('Experiments'), sg.Text(str(today()))],
+        [sg.Button('New', key='_NewExp'), sg.Button('Edit', key= '_Edit')],
+        [sg.Button('Delete', key='_Delete'), sg.Button('View', key= '_View')],
+        [sg.Button('Close', key= '_close')]
+    ],
+    'LabsLayout' : [
+        [sg.Text('Labs'), sg.Text(str(today()))],
+        [sg.button('New', key='_NewLab'), ]
+    ],
+    'SettingsLayout' : [
+        [sg.Text('Settings'), sg.Text(str(today()))],
+        [sg.Button('Change Password', key= '_ChangePass'), sg.Button('Change User', key= '_ChangeUser')],
+        [sg.Button('Close', key= '_Close')]
+    ]
+}
+
+
+def StartWindow():
+    startWindow = sg.Window('Welcome', layout= layouts['StartLayout'], no_titlebar= True)
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
