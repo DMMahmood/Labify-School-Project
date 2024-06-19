@@ -6,30 +6,28 @@ import matplotlib as mpl
 sg.theme('DarkGrey')
 '''
 Windows i need:
-sign in  done
-signout done 
-signup done
-main admin window done 
-main non admin window done
+sign in 
+signout
+signup
+main admin window
+main non admin window
 -admin- 
-manage users - Submenus: create, delete, update
-manage experiments - Submenus: create, delete, update
-create user done
-delete user done
+manage users
+manage experiments
+create user
+delete user
 -main user-
-create experiment 
+create experiment
 delete experiment
 create experiment template
 delete experiment template
 '''
-
 '''
 testing admin data:
 username: liqp214
 password: TestPassword1
 '''
 exec(open("serverside.py").read())
-
 def signInWindow():
     layout = [
         [sg.T('Welcome User')],
@@ -38,44 +36,18 @@ def signInWindow():
         [sg.B('Sign in', key='_SignIn'), sg.Cancel()]
     ]
     window = sg.Window('Labify', layout)
-     'AdminMainLayout' : [
-        [sg.Text('Welcome ADMIN', text_color='Red'), sg.Text(today())],
-        [sg.Button('Experiments', key= '_Experiments'), sg.Button('Labs', key= '_Labs')],
-        [sg.Button('View Info', key= '_ViewInfo'), sg.Button('Settings', key= '_Settings')],
-        [sg.Button('Close', key='_Close')]
-    ],
-    'ExperimentsLayout' : [
-        [sg.Text('Experiments'), sg.Text(str(today()))],
-        [sg.Button('New', key='_NewExp'), sg.Button('Edit', key= '_Edit')],
-        [sg.Button('Delete', key='_Delete'), sg.Button('View', key= '_View')],
-        [sg.Button('Close', key= '_close')]
-    ],
-    'LabsLayout' : [
-        [sg.Text('Labs'), sg.Text(str(today()))],
-        [sg.button('New', key='_NewLab'), ]
-    ],
-    'SettingsLayout' : [
-        [sg.Text('Settings'), sg.Text(str(today()))],
-        [sg.Button('Change Password', key= '_ChangePass'), sg.Button('Change User', key= '_ChangeUser')],
-        [sg.Button('Close', key= '_Close')]
-    ]
-}
-
-
-def StartWindow():
-    startWindow = sg.Window('Welcome', layout= layouts['StartLayout'], no_titlebar= True)
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
             break
         elif event == '_SignIn':
             ID = values['_ID']
-            password = values['_Password']
+            password = hashpassword(values['_Password'])
             userExists = checkExistsInUsers(ID)
             if userExists == False:
                 sg.popup('User does not exist')
                 signInWindow()
-            realpassword = getPassword(ID)
+            realpassword = hashpassword(getPassword(ID)) 
             if realpassword == password:
                 adminStatus = AdminCheck(ID, password)
                 if adminStatus == True:
@@ -86,6 +58,27 @@ def StartWindow():
                     mainUserWindow(ID)
             else:
                 sg.popup(f'Incorrect password')
+
+
+def signUpWindow():
+    layout = [
+        [sg.T('Name'), sg.Input('', key='_Name')],
+        [sg.T('Password'), sg.Input('', password_char='*', key='_Password')],
+        [sg.T('Admin'), sg.DropDown(['No', 'Yes'], default_value=['No'], readonly=True)],
+        [sg.B('Sign Up'), sg.Cancel()]
+    ]
+    window = sg.Window('Labify', layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
+            break
+        else:
+            password, admin = values['_Password'], values['_Admin']
+            if admin == 'Yes':
+                admin = 1
+            else:
+                admin = 0
+            createUser(password, admin)
 
 def mainAdminWindow(ID):
     layout = [
@@ -105,70 +98,26 @@ def mainAdminWindow(ID):
             window.Close()
             mainUserWindow(ID)
         elif event == 'Manage Experiments':
+            experimentsManagementWindow()
             defaultExperimentWindow()
         elif event == 'Manage Equipment':
             equipmentManagementWindow()
 
+def experimentsManagementWindow():
+    pass
+
 def defaultExperimentWindow():
     layout = [
-        [sg.T('Default Experiments')], 
+        [sg.T('Defaults'), sg.B('Create'), sg.B('Delete'), sg.B('Edit')]
+        [sg.T('Default Experiments')]
         [sg.B('Create'), sg.B('Delete'), sg.B('Edit')]
     ]
     window = sg.Window('Labify', layout)
-    pass
-
-def getCheckBoxes(values) -> list:
-    boxes = []
-    for value in values:
-        boxes.append([sg.Checkbox(str(value), default=False, id=f'_{value}')])
-    return boxes
-
-def createDefaultExperimentWindow():
-    allequipment = getAllEquipment()
-    for i in range (0, len(allequipment)):
-        allequipment[i] = [str(allequipment[i]), 0]
-    #essentially need to check if each equipment is possiblle by having a dynamic layout whihc adaptsto the changing ammoint of equipment needed
-    layout = [
-        [sg.T('Name'), sg.InputText('', key='_Name')],
-        [sg.T('Time (mins)'), sg.InputText('', key='_Time')],
-        [sg.T('Equipment')],
-        getCheckBoxes(getAllEquipment()),
-        [sg.B('Confirm'), sg.B('Cancel')]
-        ]
-
-    window = sg.Window('labify', layout)
-    event, values = window.read()
-    while True:
-        if event == sg.WINDOW_CLOSED or event == 'Exit':
-            break
-        elif event == 'Confirm':
-            equipment = []
-            Name = values['_Name']
-            if checkDefaultExperimentExists(Name):
-                sg.Popup('Default already exists')
-                window.close()
-                defaultExperimentWindow()
-            for each in allequipment:
-                if values[f'_{each}'] == True:
-                    equipment.append(each)
-            try:
-                time = int(values['_Time'])
-                if 0 > time or time > 1200:
-                    sg.Popup('Time not valid')    
-            except ValueError:
-                sg.Popup('Time not valid')
-                
-            
-            createDefaultExperiment(Name, str(equipment), time)
 
 
 
 def equipmentManagementWindow():
     pass
-
-
-
-
 def mainUserWindow(User):
     layout = [ 
         [sg.T(f'Welcome USER {User}, {today()}')],
@@ -180,8 +129,6 @@ def mainUserWindow(User):
         event, values = window.read()
         if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
             break
-
-
 def manageUsersWindow(User):
     layout = [
         [sg.T('Users'), sg.B('Delete'), sg.B('Create')],
@@ -192,8 +139,6 @@ def manageUsersWindow(User):
         event, values = window.read()
         if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
             break
-
-
 def manageExperimentsWindow(User):
     layout = [
         [sg.T('Defaults'), sg.B('Create'), sg.B('Delete')],
@@ -202,6 +147,9 @@ def manageExperimentsWindow(User):
 
 def createUserWindow():
     layout = [
+        [sg.T('Name'), sg.Input()],
+        [sg.T('Password'), sg.Input(password_char='*')],
+        [sg.B('Admin'), sg.DD(['Yes', 'No'], default_value='No')],
         [sg.T('Name'), sg.Input(key='_Name')],
         [sg.T('Password'), sg.Input(key='_Password', password_char='*')],
         [sg.T('Admin'), sg.DD(['Yes', 'No'], default_value='No', key='_Admin')],
@@ -229,4 +177,4 @@ def createUserWindow():
                 else:
                     sg.Popup(f"Your unique id is {ID}")
 
-signInWindow()
+createUserWindow()
