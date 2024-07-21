@@ -19,10 +19,10 @@ def com(): #To be added to every sql command which updates/deletes/creates value
     connecter.commit()
     
 #Creating the neccesary tables
-cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin BOOLEAN)")
+cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS Equipment (EquipmentName TEXT PRIMARY KEY, CountOfEquipment INTERGER, CountOfInUseEquipment INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
-cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active BOOLEAN, UserID TEXT)")
+cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active INTERGER, UserID TEXT)")
 cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 com()
 
@@ -111,14 +111,15 @@ def hashpassword(password):
 def createUser(password, admin):
     password = hashpassword(password)
     username = idgen()
-    if not regex.fullmatch(r'[A-Za-z0-9]{8,}', password) or admin not in [True, False]:
+    int(admin)
+    if not regex.fullmatch(r'[A-Za-z0-9]{8,}', password) or admin not in [1,0,'1','0']:
         print("RegexError, Serverside")
         return False
     if checkExistsInUsers(id):
         print("Duplicate Error")
         return False
     username = str(idgen())
-    cursor.execute (f"INSERT INTO Users VALUES (?, ?, ?, ?)", (username, str(password), date.today(), bool(admin)))
+    cursor.execute (f"INSERT INTO Users VALUES (?, ?, ?, ?)", (username, str(password), date.today(), admin))
     print(f"User Created: {username}")
     com()
     return username
@@ -223,18 +224,14 @@ def incrementEquipment(Name) -> bool:
         return True
 
 def decrementEquipment(Name) -> bool:
-    if checkEquipmentUsable(Name) == False:
-        print("Equipment Not useable")
+    values = getEquipmentValues(Name)
+    count = values[2] - 1
+    if count < 0:
+        print("Count Can NOT go below 0")
         return False
-    else:
-        values = getEquipmentValues(Name)
-        count = values[2] - 1
-        if count < 0:
-            print("Count Can NOT go below 0")
-            return False
-        cursor.execute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}")
-        com()
-        return True
+    cursor.execute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}")
+    com()
+    return True
 
 def deleteEquipment(Name) -> bool:
     if checkEquipmentExists(Name) == False:
@@ -301,6 +298,14 @@ def checkExperimentExistsByName(Name):
     else:
         print("Value Found")
         return True
+    
+def getAllLiveExperiments() -> list:
+    values = cursor.execute(f"SELECT ExperimentName FROM LiveExperiments WHERE (Live = 1)")
+    values = values.fetchall()
+    if values == []:
+        return ['None']
+    else:
+        return values
 
 def checkExperimentExistsByID(ID):
     values = cursor.execute(f"SELECT ExperimentID FROM LiveExperiments WHERE ExperimentID = '{ID}'")
@@ -323,8 +328,8 @@ def createExperimentID() -> str:
 '''cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active BOOLEAN, UserID TEXT))")'''
 def createLiveExperimentFromDefault(NameOfDefault, User):
+    ic('createLiveExperimentFromDefault was ran')
     if checkDefaultExperimentExists(NameOfDefault) == False:
-        print("Default Experiment Not Found")
         return False
     defaultValues = cursor.execute(f"SELECT * FROM DefaultExperiments WHERE ExperimentName = '{NameOfDefault}'")
     defaultValues = defaultValues.fetchone()
@@ -332,15 +337,17 @@ def createLiveExperimentFromDefault(NameOfDefault, User):
     for obj in Equipment:
         increment = incrementEquipment(obj)
         if checkEquipmentUsable(obj) == False:
-            print("Equipment Not Usable")
+            ic("Equipment Not Usable")
             return False
-        if incrementEquipment(obj) == False:
-            print("Error incrementing equipment")
+        if not increment:
+            ic("Error incrementing equipment")
             return False
     ID = createExperimentID()
     cursor.execute(f"INSERT INTO LiveExperiments Values (?, ?, ?, ?, ?)", (ID, NameOfDefault, Equipment, True, User))
     com()
     return True
+
+
 
 def createLiveExperimentFromNew(NameofExperiment, Equipment, User):
     if checkDefaultExperimentExists(NameofExperiment) == True:
@@ -353,12 +360,13 @@ def createLiveExperimentFromNew(NameofExperiment, Equipment, User):
         if incrementEquipment(obj) == False:
             print("Error incrementing equipment")
             return False
+    ic(NameofExperiment, Equipment, True, User)
     ID = createExperimentID()
     cursor.execute(f"INSERT INTO LiveExperiments Values (?, ?, ?, ?, ?)", (ID, NameofExperiment, Equipment, True, User))
     com()
     return True
 
-def removeLiveExperimentByID(ID):
+def endExperimentByID(ID):
     if checkExperimentExistsByID(ID) == False:
         print("Experiment Not Found")
         return False
@@ -369,7 +377,7 @@ def removeLiveExperimentByID(ID):
         if decrement == False:
             print("Error Decrementing Equipment")
             return False
-    cursor.execute(f"DELETE FROM LiveExperiments WHERE ExperimentID = '{ID}'")
+    cursor.execute(f"UPDATE LiveExperiments SET Active = 0 WHERE ExperimentID = '{ID}'")
     com()
     return
 

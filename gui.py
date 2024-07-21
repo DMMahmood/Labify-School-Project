@@ -28,7 +28,7 @@ testing admin data:
 username: liqp214
 password: TestPassword1
 '''
-signedInUser = ''
+signedInUser = 'Daniyal'
 exec(open("serverside.py").read())
 def chooseSignInWhenReOpening(ID):
     global signedInUser
@@ -96,10 +96,11 @@ def signUpWindow():
                 admin = False
             createUser(password, admin)
 
+
 def mainAdminWindow(ID):
     layout = [
         [sg.T(f'Welcome ADMIN {ID}, todays date is {date.today()}')],
-        [sg.B('Manage Users'), sg.B('Manage Experiments'), sg.B('Manage Equipment')],
+        [sg.B('Manage Users'), sg.B('Manage Live'), sg.B('Manage Default'), sg.B('Manage Equipment')],
         [sg.B('Sign Out'), [sg.B('User View')], sg.Exit()]
     ]
     window = sg.Window('Labify', layout)
@@ -113,9 +114,10 @@ def mainAdminWindow(ID):
         elif event == 'Manage Users':
             window.Close()
             mainUserWindow(ID)
-        elif event == 'Manage Experiments':
+        elif event == 'Manage Live':
             experimentsManagementWindow()
-            defaultExperimentWindow()
+        elif event == 'Manage Default':
+            manageExperimentsWindow()
         elif event == 'Manage Equipment':
             equipmentManagementWindow()
 
@@ -136,9 +138,9 @@ def experimentsManagementWindow():
         elif event == 'View Live':
             viewLiveExperimentsWindow()
             
-        
 
-'''Default experiment windows and subwindows'''
+'''DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
+LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active BOOLEAN, UserID TEXT))")'''
 
 def genEquipmentCheckBoxes():
     equipment = getAllEquipment()
@@ -146,6 +148,117 @@ def genEquipmentCheckBoxes():
     for i in range(len(equipment)):
         checkboxs.append(sg.Checkbox(text= equipment[i], key=f'_{equipment[i]}'))
     return checkboxs
+
+
+def startExperimentFromDefaultWindow():
+    defaultExperiments = getAllDefaultExperiments()
+    column = [
+    [sg.B(defaultExperiments[i])] for i in range(len(defaultExperiments))]
+    layout = [
+        [sg.Column(column, scrollable=True,  vertical_scroll_only= True)], #Creates a vertical scroll of all experiments
+        [sg.B('Cancel')]
+    ]
+    window = sg.Window('Labify', layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED or event == 'Exit': # if user closes window or clicks cancel
+            exit()
+        elif event == 'Cancel':
+            window.Close()
+            experimentsManagementWindow()
+        elif event in defaultExperiments:
+            ic('Meow')
+            #Need to validate for the experiment e.g. checks experiment is possible
+            values = getDefaultExperimentValues(event)
+            sg.Popup(f'The Equipment that will be used is \n {values[1]}')
+            if createLiveExperimentFromDefault(values[0], signedInUser):
+                sg.Popup('Experiment succesfully created')
+            else:
+                sg.Popup('Error, Experiment could not be started')
+        window.Close()
+        experimentsManagementWindow()
+
+    
+def startExperimentFromNewWindow():
+    #default experiments: need the name, equipment needed, time taken
+    #need to get all equipment in a list as checkboxes
+    equipmentcheckboxes = genEquipmentCheckBoxes()
+    layout = [
+        [sg.T('Create new default experiment')],
+        [sg.T('Name: '), sg.Input(key='_Name')],
+        [equipmentcheckboxes],
+        [sg.B('Create'), sg.Exit()]
+    ]
+    window = sg.Window('Labify', layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED or event == 'Exit': # if user closes window or clicks cancel
+            exit()
+        elif event == 'Create':
+            name = str(values['_Name'])
+            equipment = []
+            for key in values.keys():
+                if key not in ['_Name', 'Cancel'] and values[key] == True:
+                    equipment.append(key[1:])
+            equipment = convertlisttostring(equipment)
+            createLiveExperimentFromNew(name, equipment, signedInUser)
+            sg.Popup('Experiment created succesfully')
+            window.close()
+            chooseSignInWhenReOpening(signedInUser)
+        elif event == 'Cancel':
+            window.Close()
+            experimentsManagementWindow()
+
+def singleLiveExperimentWindow(values):
+    #ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active INTERGER, UserID TEXT)
+    layout = [
+        [sg.T(f'Name {values[1]}'), sg.T(f'Started by {values[4]}')],
+        [sg.T(f'Equipment {values[2]}')],
+        [sg.B('Finish'), sg.B('Cancel')]
+    ]
+    window = sg.Window('Labify', layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED or event == 'Exit': # if user closes window or clicks cancel
+            exit()
+        elif event == 'Finish':
+            endExperimentByID(values[0])
+            sg.Popup('Experiment has been ended')
+            window.Close()
+            manageExperimentsWindow()
+        elif event == 'Cancel':
+            window.Close()
+            manageExperimentsWindow()
+
+
+def viewLiveExperimentsWindow():
+    liveExperiments = getAllLiveExperiments()
+    column = [
+    [sg.B(liveExperiments[i] for i in range(len(liveExperiments)))]
+    ]
+    layout = [
+        [sg.Column(column, scrollable=True,  vertical_scroll_only=True)], #Creates a vertical scroll of all experiments
+        [sg.B('Cancel')]
+    ]
+    window = sg.Window('Labify', layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED or event == 'Exit': # if user closes window or clicks cancel
+            exit()
+        elif event in liveExperiments:
+            values = getLiveExperimentValuesByName(event)
+            window.Close()
+            singleLiveExperimentWindow(values)
+        elif event == 'Cancel':
+            window.Close()
+            manageExperimentsWindow()
+
+            
+            
+
+'''Default experiment windows and subwindows'''
+
+
 
 def createDefaultWindow():
     #default experiments: need the name, equipment needed, time taken
@@ -186,12 +299,12 @@ def createDefaultWindow():
                 createDefaultExperiment(name, equipment, timetaken)
                 sg.Popup('Experiment created succesfully')
                 window.close()
-                chooseSignInWhenReOpening(signedInUser)
+                defaultExperimentWindow()
         
 def deleteDefaultWindow():
     layout = [
         [sg.T('Experiment Name')],
-        [sg.I(key='_Experiment')]
+        [sg.I(key='_Experiment')],
         [sg.B('Delete'), sg.B('Cancel')]
     ]
     window = sg.Window('Labify', layout)
@@ -236,6 +349,7 @@ def editDefaultWindow():
             else:
                 deleteDefaultExperiment(experiment)
                 createDefaultExperiment(experiment, equipmentcheckboxes, timetaken)
+
 def defaultExperimentWindow():
     layout = [
         [sg.T('Defaults')], 
@@ -264,9 +378,9 @@ def equipmentManagementWindow():
 
 
 
-def mainUserWindow(User):
+def mainUserWindow():
     layout = [ 
-        [sg.T(f'Welcome USER {User}, {date.today()}')],
+        [sg.T(f'Welcome USER {signedInUser}, {date.today()}')],
         [sg.T('Experiments'), sg.B('Create'), sg.B('Delete')],
         [sg.B('My Info'), sg.B('Sign Out')]
     ]
@@ -276,7 +390,7 @@ def mainUserWindow(User):
         if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
             break
         ''''''
-def manageUsersWindow(User):
+def manageUsersWindow(): #to be continued
     layout = [
         [sg.T('Users'), sg.B('Delete'), sg.B('Create')],
         [sg.T('Update'), sg.B('Export'), sg.Cancel()]
@@ -285,8 +399,10 @@ def manageUsersWindow(User):
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
-            break
-def manageExperimentsWindow(User):
+            exit()
+
+
+def manageExperimentsWindow(): 
     layout = [
         [sg.T('Defaults'), sg.B('Create'), sg.B('Delete')],
         [sg.T('Live'), sg.B('Edit'), sg.B('Delete'), sg.B('Create')]
@@ -322,3 +438,5 @@ def createUserWindow():
                     sg.Popup(f"Your unique id is {ID}")
 
 chooseSignInWhenReOpening(signedInUser)
+
+
