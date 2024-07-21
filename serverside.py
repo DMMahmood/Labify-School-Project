@@ -256,13 +256,7 @@ def getAllEquipment():
 def checkDefaultExperimentExists(Name) -> bool:
     values = cursor.execute(f"SELECT ExperimentName FROM DefaultExperiments WHERE ExperimentName = '{Name}'")
     values = values.fetchone()
-    if values == None:
-        print("Value not found")
-        return False
-    else:
-        print("Value Found")
-        return True
-
+    return values != None
 
 def createDefaultExperiment(Name, Equipment, TimeTaken) :
     if checkDefaultExperimentExists(Name) == True:
@@ -271,7 +265,6 @@ def createDefaultExperiment(Name, Equipment, TimeTaken) :
     else:
         cursor.execute(f"INSERT INTO DefaultExperiments Values(?, ?, ?)", (Name, Equipment, TimeTaken))
         com()
-        print("Default Experiment added")
         return True
 
 
@@ -392,10 +385,8 @@ def getLiveExperimentValuesByID(ID):
     if checkExperimentExistsByID(ID) == False:
         print("Experiment Not Found")
         return [None, None, None, None, None]
-    values = cursor.execute(f"SELECT * FROM LiveExperiments WHERE ExperimentID = '{ID}'")
-    values = values.fetchone()
-    return values
-
+    return cursor.execute(f"SELECT * FROM LiveExperiments WHERE ExperimentID = '{ID}'").fetchone()
+    
 def getLiveExperimentValuesByName(Name):
     ID = getIDOfLiveFromName(Name)
     if ID == 0:
@@ -403,4 +394,3 @@ def getLiveExperimentValuesByName(Name):
         return [None, None, None, None, None]
     return getLiveExperimentValuesByID(ID)
 
-ic(getDefaultExperimentValues('Testing'))

@@ -106,7 +106,7 @@ def mainAdminWindow(ID):
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED or event == 'Exit': # if user closes window or clicks cancel
-            break
+            exit()
         elif event == 'Sign Out':
             window.Close()
             signInWindow()
@@ -120,17 +120,32 @@ def mainAdminWindow(ID):
             equipmentManagementWindow()
 
 def experimentsManagementWindow():
-    pass
+    layout = [
+        [sg.B('Start Default'), sg.B('Start New')],
+        [sg.B('View Live'), sg.B('Exit')]
+    ]
+    window = sg.Window('Labify', layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED or event == 'Exit': # if user closes window or clicks cancel
+            exit()
+        elif event == 'Start Default':
+            startExperimentFromDefaultWindow()
+        elif event == 'Start New':
+            startExperimentFromNewWindow()
+        elif event == 'View Live':
+            viewLiveExperimentsWindow()
+            
+        
+
 '''Default experiment windows and subwindows'''
+
 def genEquipmentCheckBoxes():
     equipment = getAllEquipment()
     checkboxs = []
     for i in range(len(equipment)):
         checkboxs.append(sg.Checkbox(text= equipment[i], key=f'_{equipment[i]}'))
     return checkboxs
-ic(genEquipmentCheckBoxes())
-
-
 
 def createDefaultWindow():
     #default experiments: need the name, equipment needed, time taken
