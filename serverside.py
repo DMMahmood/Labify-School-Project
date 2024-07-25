@@ -300,7 +300,7 @@ def checkExperimentExistsByName(Name):
         return True
     
 def getAllLiveExperiments() -> list:
-    values = cursor.execute(f"SELECT ExperimentName FROM LiveExperiments WHERE (Live = 1)")
+    values = cursor.execute(f"SELECT ExperimentName FROM LiveExperiments WHERE (Active= 1)")
     values = values.fetchall()
     if values == []:
         return ['None']

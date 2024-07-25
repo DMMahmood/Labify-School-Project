@@ -233,11 +233,14 @@ def singleLiveExperimentWindow(values):
 
 def viewLiveExperimentsWindow():
     liveExperiments = getAllLiveExperiments()
-    column = [
-    [sg.B(liveExperiments[i] for i in range(len(liveExperiments)))]
-    ]
+    ic(liveExperiments)
+    columnLayout = [sg.B(liveExperiments[i]) for i in range(len(liveExperiments))]
+    for i in range(len(columnLayout)): columnLayout[i] = [columnLayout[i]]
+    ic(columnLayout)
+    
+
     layout = [
-        [sg.Column(column, scrollable=True,  vertical_scroll_only=True)], #Creates a vertical scroll of all experiments
+        [sg.Column(columnLayout)], #Creates a vertical scroll of all experiments
         [sg.B('Cancel')]
     ]
     window = sg.Window('Labify', layout)
