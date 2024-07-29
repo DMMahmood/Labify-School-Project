@@ -1,7 +1,6 @@
 import sqlite3 as sql
 from os import path
 from random import choice, randint
-import bcrypt as bcp
 import re as regex
 from datetime import date
 from icecream import ic
@@ -31,7 +30,7 @@ com()
 def checkExistsInUsers(id) -> bool:
     values = cursor.execute(f"SELECT UserID FROM Users WHERE UserID='{id}'")
     values = values.fetchall()
-    if values == []:
+    if values == [] or values == None:
         return False
     else:
         return True
@@ -93,7 +92,7 @@ def total_time(timein, timeout) -> str:
         right = f"0{right}"
     return f"{left}:{right}"
 
-def idgen() -> str: #as an improvement, make it such that you have a csv of used ids, and just check if not in there
+def idgen() -> str: 
     #generate random 5 digit number
     id = randint(1000000, 9999999)
     while f"{id}" not in getAllUsers() and f"{id}" not in getAllDefaultExperiments and f"{id}" not in getAllEquipment:
@@ -108,20 +107,24 @@ def hashpassword(password):
     '''
     return password
 
-def createUser(password, admin):
+def createUser(username, password, admin):
     password = hashpassword(password)
-    username = idgen()
-    int(admin)
-    if not regex.fullmatch(r'[A-Za-z0-9]{8,}', password) or admin not in [1,0,'1','0']:
-        print("RegexError, Serverside")
+    conversiondictforadmin = {
+        'yes': 1,
+        'no': 0
+    }
+    admin = conversiondictforadmin[admin.lower()]
+    if not regex.fullmatch(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$", password):
+        print("Password is not valid")
         return False
+    elif admin not in [1,0]:
+        print(f'Admin should be 1,0 instead it was: {admin}')
     if checkExistsInUsers(id):
         print("Duplicate Error")
         return False
-    username = str(idgen())
     cursor.execute (f"INSERT INTO Users VALUES (?, ?, ?, ?)", (username, str(password), date.today(), admin))
-    print(f"User Created: {username}")
     com()
+    print(f"User Created: {username}")
     return username
 
 def searchUserByID(id):
@@ -137,7 +140,7 @@ def searchUserByID(id):
 def getAllUsers() -> list:
     values = cursor.execute(f"SELECT UserID FROM Users")
     values = values.fetchall()
-    if values == []:
+    if values in [[], None]:
         print("No users in database")
         return ['None']
     else:
@@ -269,7 +272,7 @@ def deleteDefaultExperiment(Name):
     if checkDefaultExperimentExists(Name) == False:
         print("Experiment Not Found")
         return False
-    cursor.execute(f"DELETE FROM DefaultExperiments WHERE Name = '{Name}'")
+    cursor.execute(f"DELETE FROM DefaultExperiments WHERE ExperimentName = '{Name}'")
     com()
     print("Default Experiment Deleted")
     return True
@@ -402,3 +405,26 @@ def getLiveExperimentValuesByName(Name):
         return [None, None, None, None, None]
     return getLiveExperimentValuesByID(ID)
 
+
+'''#Creating the neccesary tables
+cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin INTERGER)")
+cursor.execute("CREATE TABLE IF NOT EXISTS Equipment (EquipmentName TEXT PRIMARY KEY, CountOfEquipment INTERGER, CountOfInUseEquipment INTERGER)")
+cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
+cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active INTERGER, UserID TEXT)")
+cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
+com()
+'''
+
+def vieweverythingineachtable():
+    print('users')
+    print(cursor.execute("SELECT * FROM Users").fetchall())
+    print('equipment')
+    print(cursor.execute("SELECT * FROM Equipment").fetchall())
+    print('defaultexperiments')
+    print(cursor.execute("SELECT * FROM DefaultExperiments").fetchall())
+    print('liveexperiments')
+    print(cursor.execute("SELECT * FROM LiveExperiments").fetchall())
+    print('signio')
+    print(cursor.execute("SELECT * FROM SignIO").fetchall())
+
+vieweverythingineachtable()
