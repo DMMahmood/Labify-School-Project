@@ -1,10 +1,10 @@
-import sqlite3 as sql
-from os import path
-from random import choice, randint
-import re as regex
-from datetime import date
-from icecream import ic
-from string import ascii_letters
+import sqlite3 as sql #use sql
+from os import path #save files to paths
+from random import choice, randint #make random decisions e.g. for randomised ids
+import re as regex #match passwords
+from datetime import date #to get current date
+from icecream import ic #testing
+from string import ascii_letters #holds a list os all letters
 connecter = sql.connect('labify.db')
 with connecter:
     cursor = connecter.cursor()
@@ -34,6 +34,13 @@ def checkExistsInUsers(id) -> bool:
         return False
     else:
         return True
+    
+def getInfoFromUsers(id) -> list:
+    if checkExistsInUsers(id) == False:
+        return [0]
+    values = cursor.execute(f"SELECT * FROM Users WHERE UserID = '{id}'")
+    values = values.fetchone()
+    return list(values)
 
 def getPassword(id) -> str:
     if checkExistsInUsers(id) == True:
@@ -45,6 +52,20 @@ def getPassword(id) -> str:
 
 def convertlisttostring(li) -> str: #This exists to let us store equipment as a string rather then a list in the sql table
     return f'{li}'[1: -1]
+
+def convertstringtoli(string) -> list:
+    return string.split(',')
+
+def convertminstohoursmins(mins):
+    hours = 0
+    while mins >= 60:
+        hours += 1
+        mins -= 60
+    if hours > 0:
+        return f'{hours}H{mins}M'
+    else:
+        return f'{mins}M'
+            
 
 def checkvars(kwargs): #checks if variables are valid
     #Once this becomes a gui convert all type errors to return false/ output an excemption not in the cli
@@ -182,7 +203,7 @@ def deleteUserFromUsers(id) -> bool:
 def checkEquipmentExists(Name) -> bool:
     values = cursor.execute(f"SELECT EquipmentName FROM Equipment WHERE EquipmentName = '{Name}' ")
     values = values.fetchall()
-    if values == []:
+    if values in [[], None]:
         return False
     else:
         return True
@@ -191,7 +212,8 @@ def checkEquipmentUsable(Name) -> bool:
     if checkEquipmentExists(Name) == False:
         print("Equipment was not found")
         return False
-    values = cursor.execute(f"SELECT (CountOfEquipment, CountOfInUseEquipment) FROM Equipment WHERE Equipment = '{Name}")
+    #cursor.execute("CREATE TABLE IF NOT EXISTS Equipment (EquipmentName TEXT PRIMARY KEY, CountOfEquipment INTERGER, CountOfInUseEquipment INTERGER)")
+    values = cursor.execute(f"SELECT CountOfEquipment, CountOfInUseEquipment FROM Equipment WHERE EquipmentName = '{Name}'")
     values = values.fetchone()
     if values[0] == values[1]:
         print("All equipment is in use")
@@ -210,10 +232,11 @@ def createNewEquipment(Name, Count) -> bool:
 
 def getEquipmentValues(Name):
     if checkEquipmentExists(Name) == False:
-        return [None,None, 0, 0]
-    values = cursor.execute(f"SELECT * FROM Equipment WHERE Equipment = '{Name}'")
+        return [None,None, 0]
+    values = cursor.execute(f"SELECT * FROM Equipment WHERE EquipmentName = '{Name}'")
     values = values.fetchone()
     return values
+
 
 def incrementEquipment(Name) -> bool:
     if checkEquipmentUsable(Name) == False:
@@ -222,9 +245,11 @@ def incrementEquipment(Name) -> bool:
     else:
         values = getEquipmentValues(Name)
         count = values[2] + 1
-        cursor.execute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}")
+        cursor.execute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}'")
         com()
         return True
+
+#ic(incrementEquipment('Gloves'))
 
 def decrementEquipment(Name) -> bool:
     values = getEquipmentValues(Name)
@@ -232,7 +257,7 @@ def decrementEquipment(Name) -> bool:
     if count < 0:
         print("Count Can NOT go below 0")
         return False
-    cursor.execute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}")
+    cursor.execute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}'")
     com()
     return True
 
@@ -240,7 +265,7 @@ def deleteEquipment(Name) -> bool:
     if checkEquipmentExists(Name) == False:
         print("CANT BE DELETED, DOES NOT EXIST")
         return False
-    cursor.execute(f"DELETE FROM Experiments WHERE Name = '{Name}'")
+    cursor.execute(f"DELETE FROM Equipment WHERE EquipmentName = '{Name}'")
     com()
     return True
 
@@ -286,6 +311,8 @@ def getAllDefaultExperiments() -> list:
         return values
     
 def getDefaultExperimentValues(Name):
+    if Name[0] == "'":
+        Name = Name[1: -1] #name had 'name ' around it so this fixes it? 
     defaultValues = cursor.execute(f"SELECT * FROM DefaultExperiments WHERE ExperimentName = '{Name}'")
     defaultValues = defaultValues.fetchone()
     return defaultValues
@@ -324,19 +351,22 @@ def createExperimentID() -> str:
     ID = ''
     for i in range(0, 12):
         ID = f"{ID}{choice(ascii_letters)}"
-    if checkExperimentExistsByID(ID) == True:
-        createExperimentID()
+    #if checkExperimentExistsByID(ID) == True:
+    #    createExperimentID()
     return ID
 
 '''cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active BOOLEAN, UserID TEXT))")'''
 def createLiveExperimentFromDefault(NameOfDefault, User):
-    ic('createLiveExperimentFromDefault was ran')
+    print('createLiveExperimentFromDefault was ran')
     if checkDefaultExperimentExists(NameOfDefault) == False:
         return False
     defaultValues = cursor.execute(f"SELECT * FROM DefaultExperiments WHERE ExperimentName = '{NameOfDefault}'")
     defaultValues = defaultValues.fetchone()
     Equipment = defaultValues[1].split(',')
+    print(Equipment)
+    Equipment = str(Equipment)
+    '''
     for obj in Equipment:
         increment = incrementEquipment(obj)
         if checkEquipmentUsable(obj) == False:
@@ -345,6 +375,7 @@ def createLiveExperimentFromDefault(NameOfDefault, User):
         if not increment:
             ic("Error incrementing equipment")
             return False
+    '''
     ID = createExperimentID()
     cursor.execute(f"INSERT INTO LiveExperiments Values (?, ?, ?, ?, ?)", (ID, NameOfDefault, Equipment, True, User))
     com()
@@ -353,9 +384,11 @@ def createLiveExperimentFromDefault(NameOfDefault, User):
 
 
 def createLiveExperimentFromNew(NameofExperiment, Equipment, User):
+    #("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active INTERGER, UserID TEXT)")
     if checkDefaultExperimentExists(NameofExperiment) == True:
         print("Default Experiment Already Exists")
         return False
+    '''#should not need to validate this as gui grabs directly from list but formatting may be wrong
     for obj in Equipment:
         if checkEquipmentUsable(obj) == False:
             print("Equipment Not Usable")
@@ -363,6 +396,8 @@ def createLiveExperimentFromNew(NameofExperiment, Equipment, User):
         if incrementEquipment(obj) == False:
             print("Error incrementing equipment")
             return False
+    '''
+
     ic(NameofExperiment, Equipment, True, User)
     ID = createExperimentID()
     cursor.execute(f"INSERT INTO LiveExperiments Values (?, ?, ?, ?, ?)", (ID, NameofExperiment, Equipment, True, User))
@@ -375,19 +410,22 @@ def endExperimentByID(ID):
         return False
     values = cursor.execute(f"SELECT Equipment FROM LiveExperiments WHERE ExperimentID = '{ID}'")
     values = values.fetchone()
-    for obj in values:
-        decrement = decrementEquipment(obj)
-        if decrement == False:
-            print("Error Decrementing Equipment")
-            return False
+    '''
+    if values != None:
+        for obj in values:
+            decrement = decrementEquipment(obj)
+            if decrement == False:
+                print("Error Decrementing Equipment")
+                return False
+    '''
     cursor.execute(f"UPDATE LiveExperiments SET Active = 0 WHERE ExperimentID = '{ID}'")
     com()
-    return
+    return True
 
 def getIDOfLiveFromName(Name):
     values = cursor.execute(f"SELECT ExperimentID FROM LiveExperiments WHERE ExperimentName = '{Name}'")
     values = values.fetchone()
-    if values == []:
+    if values == None:
         print("Experiment Not Found")
         return 0
     return values[0]
@@ -414,7 +452,7 @@ cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PR
 cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 com()
 '''
-
+#testing code, just lets me see what changes are succesfully made at an instant
 def vieweverythingineachtable():
     print('users')
     print(cursor.execute("SELECT * FROM Users").fetchall())
