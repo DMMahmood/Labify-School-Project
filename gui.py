@@ -27,7 +27,7 @@ testing admin data:
 username: liqp214
 password: TestPassword1
 '''
-signedInUser = 'test' # change this to blank string '' before deploying
+signedInUser = 'Dan' # change this to blank string '' before deploying
 adminStatus = True #change this to None before deploying
 exec(open("serverside.py").read())
 def chooseSignInWhenReOpening(ID = ''):
@@ -195,7 +195,7 @@ def liveExperimentsManagementWindow():
 '''DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
 LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active BOOLEAN, UserID TEXT))")'''
 
-def genEquipmentCheckBoxes():
+def genEquipmentCheckBoxes(): #documented
     equipment = getAllEquipment()
     checkboxs = []
     for i in range(len(equipment)):
@@ -205,10 +205,8 @@ def genEquipmentCheckBoxes():
 
 def startExperimentFromDefaultWindow():
     defaultExperiments = getAllDefaultExperiments()
-    ic(defaultExperiments)
     for i in range(len(defaultExperiments)):
         defaultExperiments[i] = str(defaultExperiments[i])[2:-3]
-    ic(defaultExperiments)
     column = [
     [sg.B(str(defaultExperiments[i]))] for i in range(len(defaultExperiments))]
     layout = [
@@ -291,7 +289,6 @@ def singleLiveExperimentWindow(vals):
 
 def viewLiveExperimentsWindow():
     liveExperiments = getAllLiveExperiments()
-    ic(liveExperiments)
     columnLayout = [sg.B(f'{str(liveExperiments[i])[2: -3]}') for i in range(len(liveExperiments))]
     for i in range(len(columnLayout)): columnLayout[i] = [columnLayout[i]]
     layout = [
@@ -317,7 +314,7 @@ def viewLiveExperimentsWindow():
 
 '''Default experiment windows and subwindows'''
 
-def defaultExperimentsManagementWindow():
+def defaultExperimentsManagementWindow(): #documented
     layout = [
         [sg.T('Defaults')], 
         [sg.B('Create'), sg.B('Delete'), sg.B('Edit')],
@@ -345,7 +342,7 @@ def defaultExperimentsManagementWindow():
             chooseSignInWhenReOpening(signedInUser)
 
 
-def createDefaultWindow():
+def createDefaultWindow(): #documented
     #default experiments: need the name, equipment needed, time taken
     #need to get all equipment in a list as checkboxes
     equipmentcheckboxes = genEquipmentCheckBoxes()
@@ -388,7 +385,7 @@ def createDefaultWindow():
             defaultExperimentsManagementWindow()
 
 
-def viewDefaultExperimentsWindow():
+def viewDefaultExperimentsWindow(): #documented
     defaultexperiments = getAllDefaultExperiments()
     for i in range(len(defaultexperiments)):
         defaultexperiments[i] = [sg.B(str(f'{defaultexperiments[i]}')[1: -2])]
@@ -410,9 +407,9 @@ def viewDefaultExperimentsWindow():
         elif event == 'Close':
             window.Close()
             defaultExperimentsManagementWindow()
-     
+ 
 
-def deleteDefaultWindow():
+def deleteDefaultWindow(): #documented
     layout = [
         [sg.T('Experiment Name')],
         [sg.I(key='_Experiment')],
@@ -439,7 +436,7 @@ def deleteDefaultWindow():
             window.Close()
             defaultExperimentsManagementWindow()
 
-def editDefaultWindow():
+def editDefaultWindow(): #documented
     equipmentcheckboxes = genEquipmentCheckBoxes()
     layout = [
         [sg.T('Experiment Name'), sg.I('', key='_Experiment')],
@@ -498,16 +495,20 @@ def equipmentManagementWindow():
 def viewEquipmentWindow():
     #[sg.B(str(defaultExperiments[i])[2: -3])] for i in range(len(defaultExperiments))]
     equipment = getAllEquipment()
-    ic(equipment)
+
+    if len(equipment) == 0: #error message implementation for empty equipment list
+        sg.Popup('There is no equipment')
+        window.Close()
+        equipmentManagementWindow()
+
     equipmentButtons = [
         [sg.B(str(equipment[i]))] for i in range(len(equipment))
     ]
+
     layout = [
         equipmentButtons, 
         [sg.B('Cancel')]
         ]
-    
-    ic(layout)
     window = sg.Window('Labify', layout)
     while True:
         event, values = window.read()
@@ -531,7 +532,6 @@ def singleEquipmentWindow(Name):
         if event == sg.WIN_CLOSED: # if user closes window or clicks cancel
             exit()
         elif event == 'Increment':
-            ic(equipment)
             if equipment[2] == equipment[1]:
                 sg.Popup('Limit reached')
                 window.Close()
@@ -768,4 +768,3 @@ def start():
     else:
         chooseSignInWhenReOpening(signedInUser)
 
-defaultExperimentsManagementWindow()
