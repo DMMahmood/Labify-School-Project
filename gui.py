@@ -172,7 +172,7 @@ def mainUserWindow(ID = ''): #documented
             mainUserWindow()
 
 
-def liveExperimentsManagementWindow():
+def liveExperimentsManagementWindow(): #documented
     layout = [
         [sg.B('Start Default'), sg.B('Start New')],
         [sg.B('View Live'), sg.B('Cancel')]
@@ -203,7 +203,7 @@ def genEquipmentCheckBoxes(): #documented
     return checkboxs
 
 
-def startExperimentFromDefaultWindow():
+def startExperimentFromDefaultWindow(): #doc
     defaultExperiments = getAllDefaultExperiments()
     for i in range(len(defaultExperiments)):
         defaultExperiments[i] = str(defaultExperiments[i])[2:-3]
@@ -231,7 +231,7 @@ def startExperimentFromDefaultWindow():
             window.Close()
             liveExperimentsManagementWindow()
 
-def startExperimentFromNewWindow():
+def startExperimentFromNewWindow(): #doc
     #default experiments: need the name, equipment needed, time taken
     #need to get all equipment in a list as checkboxes
     equipmentcheckboxes = genEquipmentCheckBoxes()
@@ -264,14 +264,26 @@ def startExperimentFromNewWindow():
         elif event == 'Cancel':
             window.Close()
             liveExperimentsManagementWindow()
-
-def singleLiveExperimentWindow(vals):
+ 
+def singleLiveExperimentWindow(vals):#doc
     #ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active INTERGER, UserID TEXT)
+
+    equipment = vals[2]
+    equipment = equipment.split(',')
+    if len(equipment) > 1: #formatting the list of elements
+        equipment[0] = equipment[0][3: -3]
+        for i in range(1, len(equipment)):
+            equipment[i] = equipment[i][4: len(equipment[i]) - 3]
+    elif len(equipment) == 1:
+        equipment = equipment[3: -3]
+    
     layout = [
         [sg.T(f'Name {vals[1]}'), sg.T(f'Started by {vals[4]}')],
-        [sg.T(f'Equipment {vals[2]}')],
+        [sg.T(f'Equipment {", ".join(equipment)}')],
         [sg.B('Finish'), sg.B('Cancel')]
     ]
+        
+    ic(equipment)
     window = sg.Window('Labify', layout)
     while True:
         event, values = window.read()
@@ -287,7 +299,7 @@ def singleLiveExperimentWindow(vals):
             liveExperimentsManagementWindow()
 
 
-def viewLiveExperimentsWindow():
+def viewLiveExperimentsWindow(): #doc
     liveExperiments = getAllLiveExperiments()
     columnLayout = [sg.B(f'{str(liveExperiments[i])[2: -3]}') for i in range(len(liveExperiments))]
     for i in range(len(columnLayout)): columnLayout[i] = [columnLayout[i]]
@@ -441,7 +453,7 @@ def editDefaultWindow(): #documented
     layout = [
         [sg.T('Experiment Name'), sg.I('', key='_Experiment')],
         [sg.T('Time Taken'), sg.I('', key='_TimeTaken')],
-        [sg.T('EquipmentUsed')],
+        [sg.T('Equipment Used')],
         [equipmentcheckboxes],
         [sg.B('Update'), sg.B('Cancel')]
     ]
@@ -768,3 +780,11 @@ def start():
     else:
         chooseSignInWhenReOpening(signedInUser)
 
+
+start()
+
+
+#startExperimentFromDefaultWindow()
+#startExperimentFromNewWindow()
+#singleLiveExperimentWindow()
+#viewLiveExperimentsWindow()
