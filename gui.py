@@ -24,12 +24,12 @@ delete experiment template
 '''
 '''
 testing admin data:
-username: liqp214
+username: Daniyal
 password: TestPassword1
 '''
-signedInUser = '' # change this to blank string '' before deploying
+signedInUser = 'Daniyal' # change this to blank string '' before deploying
 adminStatus = True
-exec(open("serverside.py").read())
+
 def chooseSignInWhenReOpening(ID = ''):
     global signedInUser
     if checkExistsInUsers(ID) == False:
@@ -250,9 +250,19 @@ def startExperimentFromNewWindow():
 
 def singleLiveExperimentWindow(vals):
     #ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active INTERGER, UserID TEXT)
+    equipment = vals[2]
+    equipment = equipment.split(',')
+    if len(equipment) > 1: #formatting the list of elements
+        equipment[0] = equipment[0][3: -3]
+        for i in range(1, len(equipment)):
+            equipment[i] = equipment[i][4: len(equipment[i]) - 3]
+    elif len(equipment) == 1:
+        equipment = equipment[3: -3]
+   
+
     layout = [
         [sg.T(f'Name {vals[1]}'), sg.T(f'Started by {vals[4]}')],
-        [sg.T(f'Equipment {vals[2]}')],
+        [sg.T(f'Equipment {", ".join(equipment)}')],
         [sg.B('Finish'), sg.B('Cancel')]
     ]
     window = sg.Window('Labify', layout)
@@ -736,5 +746,17 @@ def createUserWindow():
             manageUsersWindow()
 
 
-#this starts both programs, no need to run 'serverside.py'
-chooseSignInWhenReOpening(signedInUser)
+
+def start():
+    exec(open("serverside.py").read())
+    if getAllUsers() == []:
+        signUpWindow()
+    else:
+        chooseSignInWhenReOpening()
+
+
+
+startExperimentFromDefaultWindow()
+#startExperimentFromNewWindow()
+#viewLiveExperimentsWindow()
+#as test data already exists, i will use a test experiment for singleExperimentWindow
