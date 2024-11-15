@@ -2,28 +2,26 @@ import sqlite3 as sql #use sql
 from os import path #save files to paths
 from random import choice, randint #make random decisions e.g. for randomised ids
 import re as regex #match passwords
-from datetime import date #to get current date
-from icecream import ic #testing
+from datetime import date, datetime #to get current date and time
+from icecream import ic # type: ignore #testing
 from string import ascii_letters #holds a list os all letters
+import bcrypt as bcp # type: ignore
 connecter = sql.connect('labify.db')
 with connecter:
     cursor = connecter.cursor()
-'''
-testing admin data:
-username: liqp214
-password: TestPassword1
-'''
+
 
 def com(): #To be added to every sql command which updates/deletes/creates values
     connecter.commit()
     
 #Creating the neccesary tables
-cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin INTEGER)")
+cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password BLOB, DateOfSetup TEXT, Admin INTEGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS Equipment (EquipmentName TEXT PRIMARY KEY, CountOfEquipment INTEGER, CountOfInUseEquipment INTEGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTEGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active INTEGER, FOREIGN KEY (UserID) REFERENCES Users(UserID))")
 cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 com()
+
 
 
 #Start of User functions
@@ -96,6 +94,13 @@ def checkvars(kwargs): #checks if variables are valid
         else:
             raise KeyError(f"Invalid key {key}")
         return True
+    
+def passwordvalidate(password):
+     if regex.match(r'[0-9]{7}[UEC]', password) == None:
+         return False
+     else:
+         return True
+     
 
 #format timeinout
 def total_time(timein, timeout) -> str:
@@ -122,14 +127,20 @@ def idgen() -> str:
 
 
 def hashpassword(password):
-    '''
+    password = password.encode('utf-8')
     salt = bcp.gensalt()
-    hashedpassword = bcp.hashpw(password, salt)
-    '''
-    return password
+    return bcp.hashpw(password, salt)
+
+def comparepasswordtohash(password, hashedpassword):
+    password = password.encode('utf-8')
+    print(password, hashedpassword)
+    if isinstance(hashedpassword, str) and hashedpassword.startswith("b'") and hashedpassword.endswith("'"):
+        hashedpassword = hashedpassword[2:-1].encode('latin1')  
+    return bcp.checkpw(password, hashedpassword)
+
+
 
 def createUser(username, password, admin):
-    password = hashpassword(password)
     conversiondictforadmin = {
         'yes': 1,
         'no': 0
@@ -143,7 +154,8 @@ def createUser(username, password, admin):
     if checkExistsInUsers(id):
         print("Duplicate Error")
         return False
-    cursor.execute (f"INSERT INTO Users VALUES (?, ?, ?, ?)", (username, str(password), date.today(), admin))
+    password = hashpassword(password)
+    cursor.execute (f"INSERT INTO Users VALUES (?, ?, ?, ?)", (username, password, date.today(), admin))
     com()
     print(f"User Created: {username}")
     return username
@@ -197,7 +209,25 @@ def deleteUserFromUsers(id) -> bool:
         cursor.execute(f"DELETE FROM Users WHERE UserID = '{id}'")
         com()
         return True
+    
 #end of Users functions
+#start of SignIO functiosn
+
+def signIn(user):
+    #cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
+    if checkExistsInUsers(user) == False:
+        return False
+    currenttime = datetime.now()
+    currentdate = datetime.date()
+    cursor.execute("INSERT INTO SignIO Values(?,?,?,?,?)", (user, currentdate, currenttime, 0, 0))
+    com()
+
+def signOut(user):
+    if checkExistsInUsers(user) == False:
+        return False
+    
+
+#end of SignIO functions
 #start of Equipment functions
 
 def checkEquipmentExists(Name) -> bool:
@@ -281,7 +311,9 @@ def getAllEquipment():
 def checkDefaultExperimentExists(Name) -> bool:
     values = cursor.execute(f"SELECT ExperimentName FROM DefaultExperiments WHERE ExperimentName = '{Name}'")
     values = values.fetchone()
+    print(values)
     return values != None
+
 
 def createDefaultExperiment(Name, Equipment, TimeTaken) :
     if checkDefaultExperimentExists(Name) == True:
@@ -357,6 +389,7 @@ def createExperimentID() -> str:
 
 '''cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active BOOLEAN, UserID TEXT))")'''
+
 def createLiveExperimentFromDefault(NameOfDefault, User):
     print('createLiveExperimentFromDefault was ran')
     if checkDefaultExperimentExists(NameOfDefault) == False:
@@ -366,7 +399,6 @@ def createLiveExperimentFromDefault(NameOfDefault, User):
     Equipment = defaultValues[1].split(',')
     print(Equipment)
     Equipment = str(Equipment)
-    '''
     for obj in Equipment:
         increment = incrementEquipment(obj)
         if checkEquipmentUsable(obj) == False:
@@ -375,7 +407,7 @@ def createLiveExperimentFromDefault(NameOfDefault, User):
         if not increment:
             ic("Error incrementing equipment")
             return False
-    '''
+        
     ID = createExperimentID()
     cursor.execute(f"INSERT INTO LiveExperiments Values (?, ?, ?, ?, ?)", (ID, NameOfDefault, Equipment, True, User))
     com()
@@ -388,7 +420,6 @@ def createLiveExperimentFromNew(NameofExperiment, Equipment, User):
     if checkDefaultExperimentExists(NameofExperiment) == True:
         print("Default Experiment Already Exists")
         return False
-    '''#should not need to validate this as gui grabs directly from list but formatting may be wrong
     for obj in Equipment:
         if checkEquipmentUsable(obj) == False:
             print("Equipment Not Usable")
@@ -396,7 +427,6 @@ def createLiveExperimentFromNew(NameofExperiment, Equipment, User):
         if incrementEquipment(obj) == False:
             print("Error incrementing equipment")
             return False
-    '''
 
     ic(NameofExperiment, Equipment, True, User)
     ID = createExperimentID()
@@ -410,14 +440,12 @@ def endExperimentByID(ID):
         return False
     values = cursor.execute(f"SELECT Equipment FROM LiveExperiments WHERE ExperimentID = '{ID}'")
     values = values.fetchone()
-    '''
     if values != None:
         for obj in values:
             decrement = decrementEquipment(obj)
             if decrement == False:
                 print("Error Decrementing Equipment")
                 return False
-    '''
     cursor.execute(f"UPDATE LiveExperiments SET Active = 0 WHERE ExperimentID = '{ID}'")
     com()
     return True
@@ -444,7 +472,24 @@ def getLiveExperimentValuesByName(Name):
     return getLiveExperimentValuesByID(ID)
 
 
-'''#Creating the neccesary tables
+'''Super scary functions'''
+
+def resetAllTables(): #call this only if user is admin, resets everything
+    from gui import signedInUser
+    if checkUserAdmin(signedInUser):
+        cursor.execute('DROP TABLE Users')
+        cursor.execute('DROP TABLE Equipment')
+        cursor.execute('DROP TABLE DefaultExperiments')
+        cursor.execute('DROP TABLE LiveExperiments')
+        cursor.execute('DROP TABLE SignIO')
+        com()
+        return True
+    else:
+        return False
+
+
+'''
+#Creating the neccesary tables
 cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password TEXT, DateOfSetup TEXT, Admin INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS Equipment (EquipmentName TEXT PRIMARY KEY, CountOfEquipment INTERGER, CountOfInUseEquipment INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
@@ -452,17 +497,13 @@ cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PR
 cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 com()
 '''
-#testing code, just lets me see what changes are succesfully made at an instant
-def vieweverythingineachtable():
-    print('users')
-    print(cursor.execute("SELECT * FROM Users").fetchall())
-    print('equipment')
-    print(cursor.execute("SELECT * FROM Equipment").fetchall())
-    print('defaultexperiments')
-    print(cursor.execute("SELECT * FROM DefaultExperiments").fetchall())
-    print('liveexperiments')
-    print(cursor.execute("SELECT * FROM LiveExperiments").fetchall())
-    print('signio')
-    print(cursor.execute("SELECT * FROM SignIO").fetchall())
 
-vieweverythingineachtable()
+''''Troubleshooting functions'''
+
+def vieweverythingineachtable():
+    ic(cursor.execute("SELECT * FROM Users").fetchall())
+    ic(cursor.execute("SELECT * FROM Equipment").fetchall())
+    ic(cursor.execute("SELECT * FROM DefaultExperiments").fetchall())
+    ic(cursor.execute("SELECT * FROM LiveExperiments").fetchall())
+    ic(cursor.execute("SELECT * FROM SignIO").fetchall())
+
