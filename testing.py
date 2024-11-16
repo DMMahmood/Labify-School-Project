@@ -1,5 +1,3 @@
-from gui import *
-from icecream import ic # type: ignore #testing
+import PySimpleGUI as sg
 
-mainUserWindow()
-mainUserWindow()
+sg.theme_previewer()

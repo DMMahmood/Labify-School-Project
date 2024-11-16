@@ -65,36 +65,7 @@ def convertminstohoursmins(mins):
         return f'{mins}M'
             
 
-def checkvars(kwargs): #checks if variables are valid
-    #Once this becomes a gui convert all type errors to return false/ output an excemption not in the cli
-    for key in kwargs:
-        if kwargs[key] == None:
-            raise TypeError(f"Expected type {key}, got None")
-        if key == 'id':
-            if type(kwargs[key]) != str and len(str(kwargs[key])) != 7 and regex.match(r'[0-9]{7}[UEC]', kwargs[key]) == None:
-                raise TypeError(f"Expected type int for {key}, got {type(kwargs[key])}")
-        elif key == 'password':
-            if len(kwargs[key]) < 8:
-                raise ValueError(f"Expected length of {key} to be at least 8, got {len(kwargs[key])}")
-        elif key == 'description' or key == 'location':
-            if type(kwargs[key]) != str:
-                raise TypeError(f"Expected type str for {key}, got {type(kwargs[key])}")
-        elif key == 'timein' or key == 'timeout' or key == 'totaltime':
-            if type(kwargs[key]) != str:
-                raise TypeError(f"Expected type str for {key}, got {type(kwargs[key])}")
-            elif len(kwargs[key]) != 5:
-                raise ValueError(f"Expected length of {key} to be 5, got {len(kwargs[key])}")
-            elif regex.match(r'[0-9]{2}:[0-9]{2}', kwargs[key]) == None:
-                raise ValueError(f"Expected format HH:MM for {key}, got {kwargs[key]}")
-        elif key == 'admin':
-            if type(kwargs[key]) != int:
-                raise TypeError(f"Expected type int for {key}, got {type(kwargs[key])}")
-            elif kwargs[key] != 0 and kwargs[key] != 1:
-                raise ValueError(f"Expected value 0 or 1 for {key}, got {kwargs[key]}")
-        else:
-            raise KeyError(f"Invalid key {key}")
-        return True
-    
+
 def passwordvalidate(password):
      if regex.match(r'[0-9]{7}[UEC]', password) == None:
          return False
@@ -104,8 +75,7 @@ def passwordvalidate(password):
 
 #format timeinout
 def total_time(timein, timeout) -> str:
-    checkvars({"timein": timein, 
-               "timeout": timeout})
+
     #format is HH:MM
     left = int(timein[0:2]) + int(timeout[0:2])
     right = int(timein[3:5]) + int(timeout[3:5])
@@ -472,21 +442,6 @@ def getLiveExperimentValuesByName(Name):
     return getLiveExperimentValuesByID(ID)
 
 
-'''Super scary functions'''
-
-def resetAllTables(): #call this only if user is admin, resets everything
-    from gui import signedInUser
-    if checkUserAdmin(signedInUser):
-        cursor.execute('DROP TABLE Users')
-        cursor.execute('DROP TABLE Equipment')
-        cursor.execute('DROP TABLE DefaultExperiments')
-        cursor.execute('DROP TABLE LiveExperiments')
-        cursor.execute('DROP TABLE SignIO')
-        com()
-        return True
-    else:
-        return False
-
 
 '''
 #Creating the neccesary tables
@@ -507,3 +462,15 @@ def vieweverythingineachtable():
     ic(cursor.execute("SELECT * FROM LiveExperiments").fetchall())
     ic(cursor.execute("SELECT * FROM SignIO").fetchall())
 
+
+def resetAllTables(): 
+    if checkUserAdmin():
+        cursor.execute('DROP TABLE Users')
+        cursor.execute('DROP TABLE Equipment')
+        cursor.execute('DROP TABLE DefaultExperiments')
+        cursor.execute('DROP TABLE LiveExperiments')
+        cursor.execute('DROP TABLE SignIO')
+        com()
+        return True
+    else:
+        return False

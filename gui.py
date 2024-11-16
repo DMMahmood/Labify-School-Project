@@ -486,7 +486,7 @@ def editDefaultWindow(): #documented
 '''Default experiment window ends'''
 
 
-def equipmentManagementWindow():
+def equipmentManagementWindow():#doc
     layout = [
     [sg.B('View'), sg.B('Create')],
     [ sg.B('Cancel')]
@@ -502,9 +502,9 @@ def equipmentManagementWindow():
             createEquipmentWindow()
         elif event == 'Cancel':
             window.Close()
-            chooseSignInWhenReOpening(signedInUser)
+            equipmentManagementWindow()
 
-def viewEquipmentWindow():
+def viewEquipmentWindow():#doc
     #[sg.B(str(defaultExperiments[i])[2: -3])] for i in range(len(defaultExperiments))]
     equipment = getAllEquipment()
 
@@ -532,7 +532,7 @@ def viewEquipmentWindow():
             window.Close()
             equipmentManagementWindow()
 
-def singleEquipmentWindow(Name):
+def singleEquipmentWindow(Name):#doc
     equipment = getEquipmentValues(Name) #Name, Count of total, Count of in use
     layout = [
         [sg.T(f'{equipment[0]} Total: {equipment[1]} In Use: {equipment[2]}')],
@@ -577,7 +577,7 @@ def singleEquipmentWindow(Name):
             viewEquipmentWindow()
     
 
-def createEquipmentWindow():
+def createEquipmentWindow(): #doc
     layout = [
         [sg.T('Name'), sg.I(default_text='', key='_Name')],
         [sg.T('Count'), sg.I(default_text='', key='_Count')],
@@ -607,7 +607,7 @@ def createEquipmentWindow():
             equipmentManagementWindow()
 
 
-def manageUsersWindow(): #to be continued
+def manageUsersWindow(): #doc
     layout = [
         [sg.T('Users'), sg.B('Delete'), sg.B('Create')],
         [sg.B('Update'), sg.B('View'), sg.Cancel()]
@@ -633,15 +633,17 @@ def manageUsersWindow(): #to be continued
             window.Close()
             chooseSignInWhenReOpening(signedInUser)
 
-def viewUsersWindow():
+def viewUsersWindow(): #doc
     users = getAllUsers()
-
+    ic(users)
     for i in range(len(users)):
-        users[i] = str(users[i])
+        users[i] = str(users[i])[2: -3]
     
+    ic(users)
+
     layout = [
         [sg.T('Users:')],
-        [sg.T(f'{users}')],
+        [sg.T(f'{", ".join(users)}')],
         [sg.B('Close')]
         ]
     window = sg.Window('Labify', layout)
@@ -655,7 +657,7 @@ def viewUsersWindow():
 
         
 
-def deleteUserWindow():
+def deleteUserWindow():#doc
     layout = [
         [sg.T('Name'), sg.Input('', key='_Name')],
         [sg.B('Submit'), sg.B('Cancel')]
@@ -684,7 +686,7 @@ def deleteUserWindow():
             window.Close()
             manageUsersWindow()
 
-def updateUserWindow():
+def updateUserWindow():#doc
     layout = [
         [sg.T('Name'), sg.Input('', key='_Name')],
         [sg.B('Submit'), sg.B('Cancel')]
@@ -707,7 +709,7 @@ def updateUserWindow():
             window.Close()
             manageUsersWindow()
 
-def nameUpdateUserWindow(name):
+def nameUpdateUserWindow(name):#doc
     #format for values: userid, password, dateofcreation, admin status
     values = searchUserByID(name)
     if values[3] == 1:
@@ -715,8 +717,8 @@ def nameUpdateUserWindow(name):
     else:
         defaultvalueforadmin = 'No'
     layout = [
-        [sg.T(f'currently editing: {name}, leave boxes blank for no change')],
-        [sg.T(f'Current password is {values[1]}'), sg.Input(default_text='New Password', key = '_NewPassword')],
+        [sg.T(f'Currently editing: {name}, leave boxes blank for no change')],
+        [sg.T(f'Password'), sg.Input(default_text='New Password', key = '_NewPassword')],
         [sg.T(f'Current admin status is {bool(values[3])}'), sg.DD(['Yes', 'No'], default_value=defaultvalueforadmin, key='_Admin')],
         [sg.B('Submit'), sg.B('Cancel')]
     ]
@@ -728,6 +730,11 @@ def nameUpdateUserWindow(name):
         elif event == 'Submit':
             if values['_NewPassword'] not in ['', None, 'New Password']:
                 values[1] = values['_NewPassword']
+                if len(values[1]) < 8:
+                    sg.Popup('INVALID PASSWORD')
+                    window.Close()
+                    manageUsersWindow()
+
             deleteUserFromUsers(name)
             createUser(name, values[1], values['_Admin'])
             window.Close()
@@ -737,7 +744,7 @@ def nameUpdateUserWindow(name):
             manageUsersWindow()   
 
 
-def createUserWindow():
+def createUserWindow():#doc
     layout = [
         [sg.T('Name'), sg.Input(key='_Name')],
         [sg.T('Password'), sg.Input(password_char='*', key= '_Password')],
@@ -749,10 +756,10 @@ def createUserWindow():
         event, values = window.read()
         if event == sg.WIN_CLOSED:
             window.close()
-            break
+            exit()
         elif event == 'Cancel':
             window.close()
-            break
+            manageUsersWindow()
         elif event == 'Submit':
             print(values)
             Name = values['_Name']
@@ -774,17 +781,10 @@ def createUserWindow():
 
 
 
-def start():
+def start():#doc
     if getAllUsers() == []:
         createUserWindow()
     else:
         chooseSignInWhenReOpening(signedInUser)
 
-
-start()
-
-
-#startExperimentFromDefaultWindow()
-#startExperimentFromNewWindow()
-#singleLiveExperimentWindow()
-#viewLiveExperimentsWindow()
+viewUsersWindow()
