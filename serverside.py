@@ -19,42 +19,23 @@ cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Passw
 cursor.execute("CREATE TABLE IF NOT EXISTS Equipment (EquipmentName TEXT PRIMARY KEY, CountOfEquipment INTEGER, CountOfInUseEquipment INTEGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTEGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active INTEGER, FOREIGN KEY (UserID) REFERENCES Users(UserID))")
-cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 com()
 
 
 
-#Start of User functions
-def checkExistsInUsers(id) -> bool:
-    values = cursor.execute(f"SELECT UserID FROM Users WHERE UserID='{id}'")
-    values = values.fetchall()
-    if values == [] or values == None:
-        return False
-    else:
-        return True
-    
-def getInfoFromUsers(id) -> list:
-    if checkExistsInUsers(id) == False:
-        return [0]
-    values = cursor.execute(f"SELECT * FROM Users WHERE UserID = '{id}'")
-    values = values.fetchone()
-    return list(values)
 
-def getPassword(id) -> str:
-    if checkExistsInUsers(id) == True:
-        values = cursor.execute(f"SELECT Password FROM Users WHERE UserID='{id}'")
-        values = values.fetchone()
-        return values[0]
-    else:
-        return 'INVALID'
 
+#doc
 def convertlisttostring(li) -> str: #This exists to let us store equipment as a string rather then a list in the sql table
     return f'{li}'[1: -1]
 
-def convertstringtoli(string) -> list:
-    return string.split(',')
+def convertstringtoli(string) -> list: #doc
+    if len(string == 0):
+        return []
+    else:
+        return string.split(',')
 
-def convertminstohoursmins(mins):
+def convertminstohoursmins(mins): #doc
     hours = 0
     while mins >= 60:
         hours += 1
@@ -64,16 +45,8 @@ def convertminstohoursmins(mins):
     else:
         return f'{mins}M'
             
-
-
-def passwordvalidate(password):
-     if regex.match(r'[0-9]{7}[UEC]', password) == None:
-         return False
-     else:
-         return True
-     
-
 #format timeinout
+'''
 def total_time(timein, timeout) -> str:
 
     #format is HH:MM
@@ -87,26 +60,43 @@ def total_time(timein, timeout) -> str:
     if right < 10:
         right = f"0{right}"
     return f"{left}:{right}"
+'''
 
-def idgen() -> str: 
+def getPassword(id) -> str:#doc
+    if checkExistsInUsers(id) == True:
+        values = cursor.execute(f"SELECT Password FROM Users WHERE UserID='{id}'")
+        values = values.fetchone()
+        return values[0]
+    else:
+        return 'INVALID'
+
+def passwordvalidate(password):#doc
+     if regex.match(r'[0-9]{7}[UEC]', password) == None:
+         return False
+     else:
+         return True
+
+def hashpassword(password):#doc
+    password = password.encode('utf-8')
+    salt = bcp.gensalt()
+    return bcp.hashpw(password, salt)
+
+def comparepasswordtohash(password, hashedpassword):#doc
+    password = password.encode('utf-8')
+    print(password, hashedpassword)
+    if isinstance(hashedpassword, str) and hashedpassword.startswith("b'") and hashedpassword.endswith("'"):
+        hashedpassword = hashedpassword[2:-1].encode('latin1')  
+    return bcp.checkpw(password, hashedpassword)    
+
+
+
+def idgen() -> str:  #doc
     #generate random 5 digit number
     id = randint(1000000, 9999999)
     while f"{id}" not in getAllUsers() and f"{id}" not in getAllDefaultExperiments and f"{id}" not in getAllEquipment:
         id = randint(1000000, 9999999)
     return str(id)
 
-
-def hashpassword(password):
-    password = password.encode('utf-8')
-    salt = bcp.gensalt()
-    return bcp.hashpw(password, salt)
-
-def comparepasswordtohash(password, hashedpassword):
-    password = password.encode('utf-8')
-    print(password, hashedpassword)
-    if isinstance(hashedpassword, str) and hashedpassword.startswith("b'") and hashedpassword.endswith("'"):
-        hashedpassword = hashedpassword[2:-1].encode('latin1')  
-    return bcp.checkpw(password, hashedpassword)
 
 
 
@@ -140,6 +130,23 @@ def searchUserByID(id):
         print(f"User is {values}")
         return values
 
+
+#Start of User function
+def checkExistsInUsers(id) -> bool: 
+    values = cursor.execute(f"SELECT UserID FROM Users WHERE UserID='{id}'")
+    values = values.fetchall()
+    if values == [] or values == None:
+        return False
+    else:
+        return True
+    
+def getInfoFromUsers(id) -> list: 
+    if checkExistsInUsers(id) == False:
+        return [0]
+    values = cursor.execute(f"SELECT * FROM Users WHERE UserID = '{id}'")
+    values = values.fetchone()
+    return list(values)
+
 def getAllUsers() -> list:
     values = cursor.execute(f"SELECT UserID FROM Users")
     values = values.fetchall()
@@ -161,7 +168,7 @@ def checkUserAdmin(id) -> bool:
         return False
 
 
-def updateUserName(id, newid) -> bool: #Must be done by admin
+def updateUserName(id, newid) -> bool: #This function never used by gui, but instead by admins via commandline
     if checkExistsInUsers(id) == False:
         print("Error: User not found in DB")
         return False
@@ -183,6 +190,7 @@ def deleteUserFromUsers(id) -> bool:
 #end of Users functions
 #start of SignIO functiosn
 
+'''
 def signIn(user):
     #cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
     if checkExistsInUsers(user) == False:
@@ -195,6 +203,9 @@ def signIn(user):
 def signOut(user):
     if checkExistsInUsers(user) == False:
         return False
+    else:
+        if
+'''
     
 
 #end of SignIO functions
@@ -255,7 +266,7 @@ def decrementEquipment(Name) -> bool:
     values = getEquipmentValues(Name)
     count = values[2] - 1
     if count < 0:
-        print("Count Can NOT go below 0")
+        ic("Count Can NOT go below 0")
         return False
     cursor.execute(f"UPDATE Equipment SET CountOfInUseEquipment = {count} WHERE EquipmentName = '{Name}'")
     com()
@@ -263,7 +274,7 @@ def decrementEquipment(Name) -> bool:
 
 def deleteEquipment(Name) -> bool:
     if checkEquipmentExists(Name) == False:
-        print("CANT BE DELETED, DOES NOT EXIST")
+        ic("CANT BE DELETED, DOES NOT EXIST")
         return False
     cursor.execute(f"DELETE FROM Equipment WHERE EquipmentName = '{Name}'")
     com()
@@ -430,14 +441,14 @@ def getIDOfLiveFromName(Name):
 
 def getLiveExperimentValuesByID(ID):
     if checkExperimentExistsByID(ID) == False:
-        print("Experiment Not Found")
+        ic("Experiment Not Found")
         return [None, None, None, None, None]
     return cursor.execute(f"SELECT * FROM LiveExperiments WHERE ExperimentID = '{ID}'").fetchone()
     
 def getLiveExperimentValuesByName(Name):
     ID = getIDOfLiveFromName(Name)
     if ID == 0:
-        print("Experiment Not Found")
+        ic("Experiment Not Found")
         return [None, None, None, None, None]
     return getLiveExperimentValuesByID(ID)
 
@@ -449,28 +460,28 @@ cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Passw
 cursor.execute("CREATE TABLE IF NOT EXISTS Equipment (EquipmentName TEXT PRIMARY KEY, CountOfEquipment INTERGER, CountOfInUseEquipment INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active INTERGER, UserID TEXT)")
-cursor.execute("CREATE TABLE IF NOT EXISTS SignIO (UserID TEXT PRIMARY KEY, Date TEXT, SignInTime TEXT, SignOutTime TEXT, TotalTime TEXT)")
 com()
 '''
 
 ''''Troubleshooting functions'''
 
-def vieweverythingineachtable():
+def viewEverythingInEachTable():#doc
     ic(cursor.execute("SELECT * FROM Users").fetchall())
     ic(cursor.execute("SELECT * FROM Equipment").fetchall())
     ic(cursor.execute("SELECT * FROM DefaultExperiments").fetchall())
     ic(cursor.execute("SELECT * FROM LiveExperiments").fetchall())
-    ic(cursor.execute("SELECT * FROM SignIO").fetchall())
+
+#doc
+def resetAllTables():  #DO NOT USE UNLESS RESETTING EVERYTHING
+    cursor.execute('DROP TABLE Users')
+    cursor.execute('DROP TABLE Equipment')
+    cursor.execute('DROP TABLE DefaultExperiments')
+    cursor.execute('DROP TABLE LiveExperiments')
+    com()
+    ic('All tables deleted')
 
 
-def resetAllTables(): 
-    if checkUserAdmin():
-        cursor.execute('DROP TABLE Users')
-        cursor.execute('DROP TABLE Equipment')
-        cursor.execute('DROP TABLE DefaultExperiments')
-        cursor.execute('DROP TABLE LiveExperiments')
-        cursor.execute('DROP TABLE SignIO')
-        com()
-        return True
-    else:
-        return False
+ic(convertlisttostring(['test1', 'dog', 'potato', 'randomword', 'foobar']))
+ic(convertlisttostring([]))
+ic(convertstringtoli("'test1', 'dog', 'potato', 'randomword', 'foobar'"))
+ic(convertstringtoli(''))
