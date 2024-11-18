@@ -100,18 +100,21 @@ def idgen() -> str:  #doc
 
 
 
-def createUser(username, password, admin):
+def createUser(username, password, admin): #doc
     conversiondictforadmin = {
         'yes': 1,
         'no': 0
     }
-    admin = conversiondictforadmin[admin.lower()]
+    if admin in ['yes', 'Yes', 'no', 'No']:
+        admin = conversiondictforadmin[admin.lower()]
+    else:
+        return False
     if not regex.fullmatch(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$", password):
         print("Password is not valid")
         return False
     elif admin not in [1,0]:
         print(f'Admin should be 1,0 instead it was: {admin}')
-    if checkExistsInUsers(id):
+    if checkExistsInUsers(username):
         print("Duplicate Error")
         return False
     password = hashpassword(password)
@@ -120,7 +123,7 @@ def createUser(username, password, admin):
     print(f"User Created: {username}")
     return username
 
-def searchUserByID(id):
+def searchUserByID(id):#doc
     values = cursor.execute(f"SELECT * FROM Users WHERE UserID = '{id}'")
     values = values.fetchone()
     if values == None:
@@ -131,7 +134,7 @@ def searchUserByID(id):
         return values
 
 
-#Start of User function
+#doc
 def checkExistsInUsers(id) -> bool: 
     values = cursor.execute(f"SELECT UserID FROM Users WHERE UserID='{id}'")
     values = values.fetchall()
@@ -139,7 +142,8 @@ def checkExistsInUsers(id) -> bool:
         return False
     else:
         return True
-    
+
+#doc  
 def getInfoFromUsers(id) -> list: 
     if checkExistsInUsers(id) == False:
         return [0]
@@ -147,6 +151,7 @@ def getInfoFromUsers(id) -> list:
     values = values.fetchone()
     return list(values)
 
+#doc
 def getAllUsers() -> list:
     values = cursor.execute(f"SELECT UserID FROM Users")
     values = values.fetchall()
@@ -156,6 +161,7 @@ def getAllUsers() -> list:
     else:
         return values
 
+#doc
 def checkUserAdmin(id) -> bool:
     if checkExistsInUsers(id):
         user = searchUserByID(id)
@@ -167,18 +173,23 @@ def checkUserAdmin(id) -> bool:
         print("User does not exist")
         return False
 
-
+#doc
 def updateUserName(id, newid) -> bool: #This function never used by gui, but instead by admins via commandline
     if checkExistsInUsers(id) == False:
         print("Error: User not found in DB")
         return False
     else:
+        if checkExistsInUsers(newid):
+            print('duplicate error')
+            return False
         cursor.execute(f"UPDATE Users SET UserID = '{newid}' WHERE UserID = '{id}'")
         com()
         print(f"User {newid} has had id changed from {id} -> {newid}")
         return True
 
-def deleteUserFromUsers(id) -> bool:
+
+#doc
+def deleteUserFromUsers(id) -> bool: #doc
     if checkExistsInUsers(id) == False:
         print("Error: User not found in DB")
         return False
@@ -480,8 +491,4 @@ def resetAllTables():  #DO NOT USE UNLESS RESETTING EVERYTHING
     com()
     ic('All tables deleted')
 
-
-ic(convertlisttostring(['test1', 'dog', 'potato', 'randomword', 'foobar']))
-ic(convertlisttostring([]))
-ic(convertstringtoli("'test1', 'dog', 'potato', 'randomword', 'foobar'"))
-ic(convertstringtoli(''))
+ic(updateUserName('Tester', 'Dan'))

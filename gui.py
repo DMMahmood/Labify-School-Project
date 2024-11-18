@@ -787,4 +787,5 @@ def start():#doc
     else:
         chooseSignInWhenReOpening(signedInUser)
 
-viewUsersWindow()
+
+mainAdminWindow(signedInUser)
