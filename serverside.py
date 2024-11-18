@@ -491,4 +491,4 @@ def resetAllTables():  #DO NOT USE UNLESS RESETTING EVERYTHING
     com()
     ic('All tables deleted')
 
-ic(updateUserName('Tester', 'Dan'))
+ic(getAllUsers())
