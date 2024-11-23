@@ -222,7 +222,7 @@ def signOut(user):
 #end of SignIO functions
 #start of Equipment functions
 
-def checkEquipmentExists(Name) -> bool:
+def checkEquipmentExists(Name) -> bool:#doc
     values = cursor.execute(f"SELECT EquipmentName FROM Equipment WHERE EquipmentName = '{Name}' ")
     values = values.fetchall()
     if values in [[], None]:
@@ -230,7 +230,7 @@ def checkEquipmentExists(Name) -> bool:
     else:
         return True
 
-def checkEquipmentUsable(Name) -> bool:
+def checkEquipmentUsable(Name) -> bool:#doc
     if checkEquipmentExists(Name) == False:
         print("Equipment was not found")
         return False
@@ -243,7 +243,7 @@ def checkEquipmentUsable(Name) -> bool:
     else:
         return True
 
-def createNewEquipment(Name, Count) -> bool:
+def createNewEquipment(Name, Count) -> bool:#doc
     if checkEquipmentExists(Name) == True:
         print("Equipment already exists")
         return False
@@ -252,7 +252,7 @@ def createNewEquipment(Name, Count) -> bool:
         com()
         return True
 
-def getEquipmentValues(Name):
+def getEquipmentValues(Name):#doc
     if checkEquipmentExists(Name) == False:
         return [None,None, 0]
     values = cursor.execute(f"SELECT * FROM Equipment WHERE EquipmentName = '{Name}'")
@@ -260,7 +260,7 @@ def getEquipmentValues(Name):
     return values
 
 
-def incrementEquipment(Name) -> bool:
+def incrementEquipment(Name) -> bool:#doc
     if checkEquipmentUsable(Name) == False:
         print("Equipment Not useable")
         return False
@@ -273,7 +273,7 @@ def incrementEquipment(Name) -> bool:
 
 #ic(incrementEquipment('Gloves'))
 
-def decrementEquipment(Name) -> bool:
+def decrementEquipment(Name) -> bool:#doc
     values = getEquipmentValues(Name)
     count = values[2] - 1
     if count < 0:
@@ -283,7 +283,7 @@ def decrementEquipment(Name) -> bool:
     com()
     return True
 
-def deleteEquipment(Name) -> bool:
+def deleteEquipment(Name) -> bool:#doc
     if checkEquipmentExists(Name) == False:
         ic("CANT BE DELETED, DOES NOT EXIST")
         return False
@@ -291,7 +291,7 @@ def deleteEquipment(Name) -> bool:
     com()
     return True
 
-def getAllEquipment():
+def getAllEquipment():#doc
     values = cursor.execute("SELECT EquipmentName FROM Equipment")
     values = values.fetchall()
     for i in range(len(values)):
@@ -300,14 +300,14 @@ def getAllEquipment():
 #equipment functions ends
 #defaultExperiments functions start
 
-def checkDefaultExperimentExists(Name) -> bool:
+def checkDefaultExperimentExists(Name) -> bool: #doc
     values = cursor.execute(f"SELECT ExperimentName FROM DefaultExperiments WHERE ExperimentName = '{Name}'")
     values = values.fetchone()
     print(values)
     return values != None
 
 
-def createDefaultExperiment(Name, Equipment, TimeTaken) :
+def createDefaultExperiment(Name, Equipment, TimeTaken): #doc
     if checkDefaultExperimentExists(Name) == True:
         print("Already exists")
         return False
@@ -317,7 +317,7 @@ def createDefaultExperiment(Name, Equipment, TimeTaken) :
         return True
 
 
-def deleteDefaultExperiment(Name):
+def deleteDefaultExperiment(Name): #doc
     if checkDefaultExperimentExists(Name) == False:
         print("Experiment Not Found")
         return False
@@ -326,7 +326,7 @@ def deleteDefaultExperiment(Name):
     print("Default Experiment Deleted")
     return True
 
-def getAllDefaultExperiments() -> list:
+def getAllDefaultExperiments() -> list: #doc
     values = cursor.execute(f"SELECT ExperimentName FROM DefaultExperiments")
     values = values.fetchall()
     if values == []:
@@ -334,7 +334,7 @@ def getAllDefaultExperiments() -> list:
     else:
         return values
     
-def getDefaultExperimentValues(Name):
+def getDefaultExperimentValues(Name): #doc
     if Name[0] == "'":
         Name = Name[1: -1] #name had 'name ' around it so this fixes it? 
     defaultValues = cursor.execute(f"SELECT * FROM DefaultExperiments WHERE ExperimentName = '{Name}'")
@@ -343,7 +343,7 @@ def getDefaultExperimentValues(Name):
 #end of defaultexperiments
 #start of liveexperiments
 
-def checkExperimentExistsByName(Name):
+def checkExperimentExistsByName(Name): #doc
     values = cursor.execute(f"SELECT ExperimentName FROM LiveExperiments WHERE ExperimentName = '{Name}'")
     values = values.fetchone()
     if values == []:
@@ -353,7 +353,7 @@ def checkExperimentExistsByName(Name):
         print("Value Found")
         return True
     
-def getAllLiveExperiments() -> list:
+def getAllLiveExperiments() -> list: #doc
     values = cursor.execute(f"SELECT ExperimentName FROM LiveExperiments WHERE (Active= 1)")
     values = values.fetchall()
     if values == []:
@@ -361,7 +361,7 @@ def getAllLiveExperiments() -> list:
     else:
         return values
 
-def checkExperimentExistsByID(ID):
+def checkExperimentExistsByID(ID): #doc
     values = cursor.execute(f"SELECT ExperimentID FROM LiveExperiments WHERE ExperimentID = '{ID}'")
     values = values.fetchone()
     if values == []:
@@ -371,16 +371,14 @@ def checkExperimentExistsByID(ID):
         print("Value Found")
         return True
 
-def createExperimentID() -> str:
+def createExperimentID() -> str: #doc
     ID = ''
     for i in range(0, 12):
         ID = f"{ID}{choice(ascii_letters)}"
-    #if checkExperimentExistsByID(ID) == True:
-    #    createExperimentID()
+    if checkExperimentExistsByID(ID) == True:
+       return createExperimentID()
     return ID
 
-'''cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTERGER)")
-cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active BOOLEAN, UserID TEXT))")'''
 
 def createLiveExperimentFromDefault(NameOfDefault, User):
     print('createLiveExperimentFromDefault was ran')
@@ -491,4 +489,10 @@ def resetAllTables():  #DO NOT USE UNLESS RESETTING EVERYTHING
     com()
     ic('All tables deleted')
 
-ic(getAllUsers())
+''' Spade: 4, Cart: 2, Sponge: 5'''
+'''Deleted 50C, D'''
+
+ic(checkDefaultExperimentExists('Oxygen combustion'))#50A
+ic(checkDefaultExperimentExists('Fakedefaultexperiment'))#50B
+
+ic(createDefaultExperiment())

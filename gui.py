@@ -2,6 +2,8 @@ import PySimpleGUI as sg # type: ignore #the gui library
 from serverside import * #import all functions from serverside.py
 from datetime import date #to get the current date and time
 from icecream import ic # type: ignore #testing
+font = ('Arial', '16')
+sg.set_options(font=font)
 sg.theme('DarkGrey') #
 
 '''
@@ -53,7 +55,7 @@ def signInWindow(): #documented
         [sg.T('Password'), sg.Input(key='_Password', password_char='*')],
         [sg.B('Sign in', key='_SignIn'), sg.Cancel()]
     ]
-    window = sg.Window('Labify', layout)
+    window = sg.Window('Labify', layout, icon='mainlogo.png', titlebar_icon='mainlogo.png')
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
@@ -596,7 +598,9 @@ def createEquipmentWindow(): #doc
                 sg.Popup('Count is invalid')
                 window.Close()
                 equipmentManagementWindow()
-            if createNewEquipment(name, count):
+            if count < 0:
+                sg.Popup(f'Equipemnt count {count} is invalid')
+            elif createNewEquipment(name, count):
                 sg.Popup(f'Equipment {name} created, total: {count}')
             else:
                 sg.Popup(f'Error {name} could not be created')
@@ -786,6 +790,5 @@ def start():#doc
         createUserWindow()
     else:
         chooseSignInWhenReOpening(signedInUser)
-
 
 mainAdminWindow(signedInUser)
