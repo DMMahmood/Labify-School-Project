@@ -254,7 +254,8 @@ def startExperimentFromNewWindow(): #doc
             for key in values:
                 if key not in ['_Name', 'Cancel'] and values[key] == True:
                     equipment.append(key[1:])
-            equipment = str(f"'{convertlisttostring(equipment)}'")
+            equipment = str(f"{convertlisttostring(equipment)}")
+            ic(equipment)
             if name == '':
                 sg.Popup('Name can not be blank')
             elif createLiveExperimentFromNew(name, equipment, signedInUser):
@@ -268,8 +269,6 @@ def startExperimentFromNewWindow(): #doc
             liveExperimentsManagementWindow()
  
 def singleLiveExperimentWindow(vals):#doc
-    #ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active INTERGER, UserID TEXT)
-
     equipment = vals[2]
     equipment = equipment.split(',')
     if len(equipment) > 1: #formatting the list of elements
@@ -784,7 +783,7 @@ def createUserWindow():#doc
 #this starts both programs, no need to run 'serverside.py'
 
 
-
+#deleted: 53B, 53C
 def start():#doc
     if getAllUsers() == []:
         createUserWindow()

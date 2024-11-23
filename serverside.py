@@ -6,6 +6,7 @@ from datetime import date, datetime #to get current date and time
 from icecream import ic # type: ignore #testing
 from string import ascii_letters #holds a list os all letters
 import bcrypt as bcp # type: ignore
+from icecream import ic
 connecter = sql.connect('labify.db')
 with connecter:
     cursor = connecter.cursor()
@@ -410,6 +411,7 @@ def createLiveExperimentFromNew(NameofExperiment, Equipment, User):
     if checkDefaultExperimentExists(NameofExperiment) == True:
         print("Default Experiment Already Exists")
         return False
+
     for obj in Equipment:
         if checkEquipmentUsable(obj) == False:
             print("Equipment Not Usable")
@@ -490,9 +492,5 @@ def resetAllTables():  #DO NOT USE UNLESS RESETTING EVERYTHING
     ic('All tables deleted')
 
 ''' Spade: 4, Cart: 2, Sponge: 5'''
-'''Deleted 50C, D'''
+'''Deleted 50C, 50D,  54C, 56B, 56C, all 57, 59A'''
 
-ic(checkDefaultExperimentExists('Oxygen combustion'))#50A
-ic(checkDefaultExperimentExists('Fakedefaultexperiment'))#50B
-
-ic(createDefaultExperiment())
