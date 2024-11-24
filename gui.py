@@ -67,7 +67,7 @@ def signUpWindow(): #documented
     layout = [
         [sg.T('Name'), sg.Input('', key='_Name')],
         [sg.T('Password'), sg.Input('', password_char='*', key='_Password')],
-        [sg.T('Admin'), sg.DropDown(['No', 'Yes'], default_value=['No'], readonly=True)],
+        [sg.T('Admin'), sg.DropDown(['No', 'Yes'], default_value=['No'], readonly=True, key='_Admin')],
         [sg.B('Sign Up'), sg.Cancel()]
     ]
     window = sg.Window('Labify', layout)
@@ -216,7 +216,7 @@ def startExperimentFromNewWindow(): #doc
     #need to get all equipment in a list as checkboxes
     equipmentcheckboxes = genEquipmentCheckBoxes()
     layout = [
-        [sg.T('Create new default experiment')],
+        [sg.T('Create new experiment')],
         [sg.T('Name: '), sg.Input(default_text='', key='_Name')],
         [equipmentcheckboxes],
         [sg.B('Create'), sg.B('Cancel')]
@@ -227,6 +227,7 @@ def startExperimentFromNewWindow(): #doc
         if event == sg.WIN_CLOSED or event == 'Exit': # if user closes window or clicks cancel
             exit()
         elif event == 'Create':
+            window.Close()
             name = str(values['_Name'])
             equipment = []
             for key in values:
@@ -234,13 +235,12 @@ def startExperimentFromNewWindow(): #doc
                     equipment.append(key[1:])
             equipment = str(f"{convertlisttostring(equipment)}")
             ic(equipment)
-            if name == '':
+            if name == '': 
                 sg.Popup('Name can not be blank')
             elif createLiveExperimentFromNew(name, equipment, signedInUser):
                 sg.Popup('Experiment created succesfully')
             else:
                 sg.Popup('There was an error in execution')
-            window.close()
             chooseSignInWhenReOpening(signedInUser)
         elif event == 'Cancel':
             window.Close()
@@ -768,4 +768,6 @@ def start():#doc
     else:
         chooseSignInWhenReOpening(signedInUser)
 
-start()
+
+signedInUser = 'Dan'
+signInWindow()

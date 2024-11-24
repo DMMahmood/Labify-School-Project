@@ -72,7 +72,7 @@ def getPassword(id) -> str:#doc
         return 'INVALID'
 
 def passwordvalidate(password):#doc
-     if regex.match(r'[0-9]{7}[UEC]', password) == None:
+     if regex.match(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$", password) == None:
          return False
      else:
          return True
@@ -493,4 +493,3 @@ def resetAllTables():  #DO NOT USE UNLESS RESETTING EVERYTHING
 
 ''' Spade: 4, Cart: 2, Sponge: 5'''
 '''Deleted 50C, 50D,  54C, 56B, 56C, all 57, 59A'''
-
