@@ -4,32 +4,10 @@ from datetime import date #to get the current date and time
 from icecream import ic # type: ignore #testing
 font = ('Arial', '16')
 sg.set_options(font=font)
-sg.theme('DarkGrey') #
+sg.theme('DarkGrey') 
 
-'''
-Windows i need:
-sign in 
-signout
-signup
-main admin window
-main non admin window
--admin- 
-manage users
-manage experiments
-create user
-delete user
--main user-
-create experiment
-delete experiment
-create experiment template
-delete experiment template
-'''
-'''
-testing admin data:
-username: liqp214
-password: TestPassword1
-'''
-signedInUser = 'Dan' # change this to blank string '' before deploying
+
+signedInUser = '' # change this to blank string '' before deploying
 adminStatus = True #change this to None before deploying
 exec(open("serverside.py").read())
 def chooseSignInWhenReOpening(ID = ''):
@@ -790,4 +768,4 @@ def start():#doc
     else:
         chooseSignInWhenReOpening(signedInUser)
 
-mainAdminWindow(signedInUser)
+start()

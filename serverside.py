@@ -19,7 +19,7 @@ def com(): #To be added to every sql command which updates/deletes/creates value
 cursor.execute("CREATE TABLE IF NOT EXISTS Users (UserID TEXT PRIMARY KEY, Password BLOB, DateOfSetup TEXT, Admin INTEGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS Equipment (EquipmentName TEXT PRIMARY KEY, CountOfEquipment INTEGER, CountOfInUseEquipment INTEGER)")
 cursor.execute("CREATE TABLE IF NOT EXISTS DefaultExperiments(ExperimentName TEXT PRIMARY KEY, Equipment TEXT, MinsTaken INTEGER)")
-cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active INTEGER, FOREIGN KEY (UserID) REFERENCES Users(UserID))")
+cursor.execute("CREATE TABLE IF NOT EXISTS LiveExperiments (ExperimentID TEXT PRIMARY KEY, ExperimentName Text, Equipment TEXT, Active INTEGER, UserID Text)")
 com()
 
 
